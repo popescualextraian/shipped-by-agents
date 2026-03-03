@@ -20,7 +20,7 @@ Training documentation for developers and teams looking to understand, adopt, an
 |---|-------|------|--------|
 | 0 | Introduction | TBD | Pending |
 | 1 | What AI coding agents are and how they differ from assistants | 20 min | Done |
-| 2 | Prompt design, context management, memory, and skills | TBD | Pending |
+| 2 | Prompt design, context management, memory, and skills | 30 min | Done |
 | 3 | Preparing projects for AI-assisted development | TBD | Pending |
 | 4 | Benefits, limits, and risks of AI-assisted coding | TBD | Pending |
 | 5 | Creating reusable prompts, skills, or simple agents | TBD | Pending |
