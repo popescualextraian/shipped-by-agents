@@ -11,7 +11,7 @@ A practical training guide for developers who want to go beyond autocomplete and
 | 0 | [Introduction](00_introduction/00_introduction.md) | 5 min | Done |
 | 1 | [Agents vs Assistants](01_agents-vs-assistants/01_agents-vs-assistants.md) | 20 min | Done |
 | 2 | [Prompt Design & Context Engineering](02_prompt-and-context-engineering/02_prompt-and-context-engineering.md) | 30 min | Done |
-| 3 | [Coding with AI Agents](03_coding-with-agents/03_coding-with-agents.md) | 30 min | Done |
+| 3 | [Coding with AI Agents](03_coding-with-agents/03_coding-with-agents.md) | 45 min | Done |
 | 4 | Benefits, Limits & Risks | — | Coming soon |
 | 5 | Reusable Prompts, Skills & Agents | — | Coming soon |
 | 6 | AI in the Software Lifecycle | — | Coming soon |
