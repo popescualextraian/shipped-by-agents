@@ -25,6 +25,10 @@ A practical training guide for developers who want to go beyond autocomplete and
 - **Team workshop** — present one or two chapters per session; designed for a 2-day training format
 - **Reference** — jump to any chapter; each one is self-contained
 
+## Follow
+
+[Shipped by Agents on Facebook](https://www.facebook.com/people/Shipped-by-Agents/61586253669140/) — updates, tips, and community discussion.
+
 ## Author
 
 Created by [Alex Popescu](https://github.com/popescualextraian) — solution architect exploring how AI agents are changing the way we build software.
