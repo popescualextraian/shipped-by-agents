@@ -17,37 +17,6 @@ You'll learn how these tools work, how to communicate with them effectively, how
 - **Teams preparing to adopt AI-assisted development** and looking for training material they can work through together
 - No prior AI experience required. Just bring your editor and curiosity.
 
-## What You'll Learn
-
-### Foundations
-
-| # | Chapter | What You'll Learn |
-|---|---------|-------------------|
-| 1 | [Agents vs Assistants](../01_agents-vs-assistants/01_agents-vs-assistants.md) | Understand the spectrum from autocomplete to autonomous agents, and how the agent loop works |
-| 2 | [Prompt Design & Context Engineering](../02_prompt-and-context-engineering/02_prompt-and-context-engineering.md) | Write prompts that produce reliable results, and manage what your agent sees |
-
-### Getting Ready
-
-| # | Chapter | What You'll Learn |
-|---|---------|-------------------|
-| 3 | [Coding with AI Agents](../03_coding-with-agents/03_coding-with-agents.md) | Use built-in agents, skills, memory, and workflows like plan-first and TDD to write code effectively |
-| 4 | Benefits, Limits & Risks | Know what agents are good at, where they fail, and how to stay safe |
-
-### Building
-
-| # | Chapter | What You'll Learn |
-|---|---------|-------------------|
-| 5 | Reusable Prompts, Skills & Agents | Create reusable instruction sets and simple custom agents |
-| 6 | AI in the Software Lifecycle | Apply agents to design, coding, testing, documentation, and code review |
-
-### Mastery
-
-| # | Chapter | What You'll Learn |
-|---|---------|-------------------|
-| 7 | Spec-Driven Development | Drive entire features from specs using agents |
-| 8 | External Tools & Data | Connect agents to APIs, databases, and external services |
-| 9 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output |
-
 ## How to Use This Guide
 
 - **Self-study** — read the chapters in order, try the exercises at the end of each one
