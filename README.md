@@ -4,14 +4,22 @@ Stop copying from ChatGPT. Start shipping with agents.
 
 A practical training guide for developers who want to go beyond autocomplete and chat — into agentic coding, where AI plans, executes, and iterates alongside you. Whether you're just getting started or already using AI daily, this guide takes you from the fundamentals to building your own agents and workflows. Designed for self-study and team workshops.
 
-## Chapters
+## Structure
+
+| Section | What's inside |
+|---------|---------------|
+| [`technical/`](technical/) | Hands-on tutorials and learning chapters |
+| [`articles/`](articles/) | Standalone pieces — comparisons, opinion, analysis |
+| [`process/`](process/) | Enterprise rollout — adoption, governance, policies |
+
+## Technical Chapters
 
 | # | Chapter | Time | Status |
 |---|---------|------|--------|
-| 0 | [Introduction](00_introduction/00_introduction.md) | 5 min | Done |
-| 1 | [Agents vs Assistants](01_agents-vs-assistants/01_agents-vs-assistants.md) | 20 min | Done |
-| 2 | [Prompt Design & Context Engineering](02_prompt-and-context-engineering/02_prompt-and-context-engineering.md) | 30 min | Done |
-| 3 | [Coding with AI Agents](03_coding-with-agents/03_coding-with-agents.md) | 45 min | Done |
+| 0 | [Introduction](technical/00_introduction/00_introduction.md) | 5 min | Done |
+| 1 | [Agents vs Assistants](technical/01_agents-vs-assistants/01_agents-vs-assistants.md) | 20 min | Done |
+| 2 | [Prompt Design & Context Engineering](technical/02_prompt-and-context-engineering/02_prompt-and-context-engineering.md) | 30 min | Done |
+| 3 | [Coding with AI Agents](technical/03_coding-with-agents/03_coding-with-agents.md) | 45 min | Done |
 | 4 | Benefits, Limits & Risks | — | Coming soon |
 | 5 | Reusable Prompts, Skills & Agents | — | Coming soon |
 | 6 | AI in the Software Lifecycle | — | Coming soon |
