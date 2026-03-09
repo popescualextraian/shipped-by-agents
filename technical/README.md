@@ -17,19 +17,20 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
 | 3 | [Coding with AI Agents](03_coding-with-agents/03_coding-with-agents.md) | Use built-in agents, skills, memory, and workflows like plan-first and TDD | 45 min |
-| 4 | Benefits, Limits & Risks | Know what agents are good at, where they fail, and how to stay safe | Coming soon |
+| 4 | [The Big Picture](04_the-big-picture/04_the-big-picture.md) | The four-layer architecture: You → Context → Agent (ReAct) → Capabilities | 45 min |
+| 5 | Benefits, Limits & Risks | Know what agents are good at, where they fail, and how to stay safe | Coming soon |
 
 ### Building
 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
-| 5 | Reusable Prompts, Skills & Agents | Create reusable instruction sets and simple custom agents | Coming soon |
-| 6 | AI in the Software Lifecycle | Apply agents to design, coding, testing, documentation, and code review | Coming soon |
+| 6 | Reusable Prompts, Skills & Agents | Create reusable instruction sets and simple custom agents | Coming soon |
+| 7 | AI in the Software Lifecycle | Apply agents to design, coding, testing, documentation, and code review | Coming soon |
 
 ### Mastery
 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
-| 7 | Spec-Driven Development | Drive entire features from specs using agents | Coming soon |
-| 8 | External Tools & Data | Connect agents to APIs, databases, and external services | Coming soon |
-| 9 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |
+| 8 | Spec-Driven Development | Drive entire features from specs using agents | Coming soon |
+| 9 | External Tools & Data | Connect agents to APIs, databases, and external services | Coming soon |
+| 10 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |

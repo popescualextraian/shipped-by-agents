@@ -1,16 +1,16 @@
 # shipped-by-agents
 
-Stop copying from ChatGPT. Start shipping with agents.
+Stop experimenting. Start shipping with agents.
 
-A practical training guide for developers who want to go beyond autocomplete and chat — into agentic coding, where AI plans, executes, and iterates alongside you. Whether you're just getting started or already using AI daily, this guide takes you from the fundamentals to building your own agents and workflows. Designed for self-study and team workshops.
+The building blocks of an enterprise adoption framework for agentic coding — technical docs, processes, sample proposals, and tools. Growing chapter by chapter, shaped by real-world experience. Built for engineering leaders driving adoption and developers doing the work.
 
 ## Structure
 
 | Section | What's inside |
 |---------|---------------|
-| [`technical/`](technical/) | Hands-on tutorials and learning chapters |
-| [`articles/`](articles/) | Standalone pieces — comparisons, opinion, analysis |
-| [`process/`](process/) | Enterprise rollout — adoption, governance, policies |
+| [`technical/`](technical/) | Technical foundations — how agents work, prompt engineering, coding workflows |
+| [`articles/`](articles/) | Analysis and comparisons — adoption models, industry approaches, trade-offs |
+| [`process/`](process/) | Enterprise rollout — adoption playbooks, governance, policies, proposal templates |
 
 ## Technical Chapters
 
@@ -20,22 +20,23 @@ A practical training guide for developers who want to go beyond autocomplete and
 | 1 | [Agents vs Assistants](technical/01_agents-vs-assistants/01_agents-vs-assistants.md) | 20 min | Done |
 | 2 | [Prompt Design & Context Engineering](technical/02_prompt-and-context-engineering/02_prompt-and-context-engineering.md) | 30 min | Done |
 | 3 | [Coding with AI Agents](technical/03_coding-with-agents/03_coding-with-agents.md) | 45 min | Done |
-| 4 | Benefits, Limits & Risks | — | Coming soon |
-| 5 | Reusable Prompts, Skills & Agents | — | Coming soon |
-| 6 | AI in the Software Lifecycle | — | Coming soon |
-| 7 | Spec-Driven Development | — | Coming soon |
-| 8 | External Tools & Data | — | Coming soon |
-| 9 | Workflows & Productivity Tips | — | Coming soon |
+| 4 | [The Big Picture](technical/04_the-big-picture/04_the-big-picture.md) | 45 min | Done |
+| 5 | Benefits, Limits & Risks | — | Coming soon |
+| 6 | Reusable Prompts, Skills & Agents | — | Coming soon |
+| 7 | AI in the Software Lifecycle | — | Coming soon |
+| 8 | Spec-Driven Development | — | Coming soon |
+| 9 | External Tools & Data | — | Coming soon |
+| 10 | Workflows & Productivity Tips | — | Coming soon |
 
 ## How to use this
 
-- **Self-study** — read the chapters in order, try the exercises
-- **Team workshop** — present one or two chapters per session; designed for a 2-day training format
-- **Reference** — jump to any chapter; each one is self-contained
+- **Build an adoption strategy** — combine technical chapters, articles, and process templates into a rollout plan tailored to your organization
+- **Train your teams** — use the technical chapters for self-study or workshops (designed for a 2-day training format)
+- **Reference** — jump to any section; each piece is self-contained
 
 ## Follow
 
-[Shipped by Agents on Facebook](https://www.facebook.com/people/Shipped-by-Agents/61586253669140/) — updates, tips, and community discussion.
+[Shipped by Agents on Facebook](https://www.facebook.com/shipped.by.agents) — updates, tips, and community discussion.
 
 ## Author
 
