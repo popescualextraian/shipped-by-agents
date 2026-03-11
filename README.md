@@ -1,47 +1,103 @@
 # shipped-by-agents
 
-Stop experimenting. Start shipping with agents.
+A practical playbook for adopting **AI coding agents** in real engineering organizations.
 
-The building blocks of an enterprise adoption framework for agentic coding — technical docs, processes, sample proposals, and tools. Growing chapter by chapter, shaped by real-world experience. Built for engineering leaders driving adoption and developers doing the work.
+Most teams are experimenting with AI coding tools.
+Few have a clear strategy for adopting **AI agents** in their development workflows.
+
+This repository is a structured guide for engineers, architects, and engineering leaders who want to move from **experimentation to repeatable adoption**.
+
+⭐ If this repository helps you, please consider giving it a star.
+It helps more teams discover the guide.
+
+---
 
 ## Structure
 
-| Section | What's inside |
-|---------|---------------|
-| [`technical/`](technical/) | Technical foundations — how agents work, prompt engineering, coding workflows |
-| [`articles/`](articles/) | Analysis and comparisons — adoption models, industry approaches, trade-offs |
-| [`process/`](process/) | Enterprise rollout — adoption playbooks, governance, policies, proposal templates |
+| Section                    | What's inside                                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| [`technical/`](technical/) | Technical foundations — how agents work, prompt engineering, and agent-driven coding workflows |
+| [`articles/`](articles/)   | Analysis and comparisons — adoption models, industry approaches, trade-offs                    |
+| [`process/`](process/)     | Enterprise rollout — adoption playbooks, governance, policies, and proposal templates          |
 
-## Technical Chapters
+---
 
-| # | Chapter | Time | Status |
-|---|---------|------|--------|
-| 0 | [Introduction](technical/00_introduction/00_introduction.md) | 5 min | Done |
-| 1 | [Agents vs Assistants](technical/01_agents-vs-assistants/01_agents-vs-assistants.md) | 20 min | Done |
-| 2 | [Prompt Design & Context Engineering](technical/02_prompt-and-context-engineering/02_prompt-and-context-engineering.md) | 30 min | Done |
-| 3 | [Coding with AI Agents](technical/03_coding-with-agents/03_coding-with-agents.md) | 45 min | Done |
-| 4 | [The Big Picture](technical/04_the-big-picture/04_the-big-picture.md) | 45 min | Done |
-| 5 | Benefits, Limits & Risks | — | Coming soon |
-| 6 | Reusable Prompts, Skills & Agents | — | Coming soon |
-| 7 | AI in the Software Lifecycle | — | Coming soon |
-| 8 | Spec-Driven Development | — | Coming soon |
-| 9 | External Tools & Data | — | Coming soon |
-| 10 | Workflows & Productivity Tips | — | Coming soon |
+## Who this is for
 
-## How to use this
+This repository is intended for people involved in **software engineering and AI adoption**.
 
-- **Build an adoption strategy** — combine technical chapters, articles, and process templates into a rollout plan tailored to your organization
-- **Train your teams** — use the technical chapters for self-study or workshops (designed for a 2-day training format)
-- **Reference** — jump to any section; each piece is self-contained
+Typical readers include:
+
+* Engineers evaluating AI adoption
+* Developers experimenting with AI coding agents
+* Software engineers designing AI-assisted development workflows
+* Internal AI champions driving adoption initiatives
+
+---
+
+## For people implementing AI adoption strategies
+
+Many engineers today are asked to:
+
+> "Figure out how we should use AI for development."
+
+This repository helps people responsible for **designing and implementing AI adoption strategies**.
+
+It provides material useful for:
+
+* understanding the challenges of AI-assisted development
+* exploring adoption strategies
+* learning from industry approaches
+* preparing internal proposals or pilot programs
+
+Start with the content in:
+
+* [`process/`](process/) — enterprise rollout and governance
+* [`articles/`](articles/) — industry perspectives and adoption models
+
+---
+
+## For teams using AI in their development cycle
+
+Teams already experimenting with AI tools can use this repository to:
+
+* understand how **AI agents change development workflows**
+* introduce **structured agent usage**
+* avoid common pitfalls in AI-assisted coding
+* design better collaboration between developers and AI agents
+
+More practical guidance will be added over time.
+
+---
+
+## Roadmap
+
+Planned additions include:
+
+* Benefits, limits, and risks of AI coding agents
+* Reusable prompts, skills, and agent architectures
+* Building agentic workflows
+* Spec-driven development
+* Internal AI adoption playbooks
+
+and many more ...
+
+---
 
 ## Follow
 
-[Shipped by Agents on Facebook](https://www.facebook.com/shipped.by.agents) — updates, tips, and community discussion.
+[Shipped by Agents on Facebook](https://www.facebook.com/shipped.by.agents)
+Updates, tips, and discussions around AI agents in software development.
+
+---
 
 ## Author
 
 Created by [Alex Popescu](https://github.com/popescualextraian) — solution architect exploring how AI agents are changing the way we build software.
 
+---
+
 ## License
 
-[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/) — you can share with credit, but no commercial use or derivatives without permission.
+[CC BY-NC-ND 4.0](https://creativecommons.org/licenses/by-nc-nd/4.0/)
+You can share with credit, but no commercial use or derivatives without permission.
