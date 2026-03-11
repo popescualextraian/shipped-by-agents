@@ -24,13 +24,14 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
-| 6 | Reusable Prompts, Skills & Agents | Create reusable instruction sets and simple custom agents | Coming soon |
-| 7 | AI in the Software Lifecycle | Apply agents to design, coding, testing, documentation, and code review | Coming soon |
+| 6 | [From Level 0 to Level 1](06_hands-on-with-agents/06_hands-on-with-agents.md) | Set up your tools, create instruction files, and practice three workflows: complex features, bug fixes, and simple tasks | 45 min |
+| 7 | [Reusable Prompts, Skills & Agents](07_skills-and-agents/07_skills-and-agents.md) | Create custom skills and agents — hands-on with a REST Assured test agent | 45 min |
+| 8 | AI in the Software Lifecycle | Apply agents to design, coding, testing, documentation, and code review | Coming soon |
 
 ### Mastery
 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
-| 8 | Spec-Driven Development | Drive entire features from specs using agents | Coming soon |
-| 9 | External Tools & Data | Connect agents to APIs, databases, and external services | Coming soon |
-| 10 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |
+| 9 | Spec-Driven Development | Drive entire features from specs using agents | Coming soon |
+| 10 | External Tools & Data | Connect agents to APIs, databases, and external services | Coming soon |
+| 11 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |

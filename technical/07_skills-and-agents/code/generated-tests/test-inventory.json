@@ -1,0 +1,69 @@
+{
+  "lastUpdated": "2026-03-11T10:00:00Z",
+  "tests": [
+    {
+      "class": "PostsApiTest",
+      "method": "should_returnAllPosts_whenGetPosts",
+      "displayName": "GET /posts returns all posts with status 200",
+      "tag": "posts",
+      "endpoint": "GET /posts",
+      "created": "2026-03-11"
+    },
+    {
+      "class": "PostsApiTest",
+      "method": "should_returnSinglePost_whenGetPostById",
+      "displayName": "GET /posts/{id} returns a single post",
+      "tag": "posts",
+      "endpoint": "GET /posts/{id}",
+      "created": "2026-03-11"
+    },
+    {
+      "class": "PostsApiTest",
+      "method": "should_createPost_whenPostPosts",
+      "displayName": "POST /posts creates a new post and returns 201",
+      "tag": "posts",
+      "endpoint": "POST /posts",
+      "created": "2026-03-11"
+    },
+    {
+      "class": "PostsApiTest",
+      "method": "should_updatePost_whenPutPost",
+      "displayName": "PUT /posts/{id} updates an existing post",
+      "tag": "posts",
+      "endpoint": "PUT /posts/{id}",
+      "created": "2026-03-11"
+    },
+    {
+      "class": "PostsApiTest",
+      "method": "should_return200_whenDeletePost",
+      "displayName": "DELETE /posts/{id} returns 200",
+      "tag": "posts",
+      "endpoint": "DELETE /posts/{id}",
+      "created": "2026-03-11"
+    },
+    {
+      "class": "CommentsApiTest",
+      "method": "should_returnComments_whenGetCommentsByPostId",
+      "displayName": "GET /posts/{id}/comments returns comments for a post",
+      "tag": "comments",
+      "endpoint": "GET /posts/{id}/comments",
+      "created": "2026-03-11"
+    },
+    {
+      "class": "CommentsApiTest",
+      "method": "should_returnFilteredComments_whenGetCommentsWithPostIdParam",
+      "displayName": "GET /comments?postId={id} returns filtered comments",
+      "tag": "comments",
+      "endpoint": "GET /comments?postId={id}",
+      "created": "2026-03-11"
+    },
+    {
+      "class": "UsersApiTest",
+      "method": "should_returnAllUsers_whenGetUsers",
+      "displayName": "GET /users returns all users with status 200",
+      "tag": "users",
+      "endpoint": "GET /users",
+      "created": "2026-03-11"
+    }
+  ]
+}
