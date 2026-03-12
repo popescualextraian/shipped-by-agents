@@ -14,11 +14,12 @@ It helps more teams discover the guide.
 
 ## Structure
 
-| Section                    | What's inside                                                                                  |
-| -------------------------- | ---------------------------------------------------------------------------------------------- |
-| [`technical/`](technical/) | Technical foundations — how agents work, prompt engineering, and agent-driven coding workflows |
-| [`articles/`](articles/)   | Analysis and comparisons — adoption models, industry approaches, trade-offs                    |
-| [`process/`](process/)     | Enterprise rollout — adoption playbooks, governance, policies, and proposal templates          |
+| Section                        | What's inside                                                                                  |
+| ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| [`technical/`](technical/)     | Training materials — how agents work, prompt engineering, and agent-driven coding workflows     |
+| [`repository/`](repository/)   | Shared repository — reusable solutions, patterns, ideas, and lessons learned from teams        |
+| [`process/`](process/)         | The framework — adoption process, team roles, maturity model, and rollout playbooks            |
+| [`articles/`](articles/)       | Analysis and comparisons — adoption models, industry approaches, trade-offs                    |
 
 ---
 
