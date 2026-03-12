@@ -1,34 +1,50 @@
 # Chapter 7: Creating Reusable Skills and Simple Agents
 
-## From Level 1 to Level 2
+## From L2 to L3
 
-In Chapter 6, you learned Level 1 — plan-build-validate with built-in tools. Every task used the same workflow: enter plan mode, review the plan, build step by step, validate with tests, commit. Your development process is already much faster. And even when it isn't faster, your quality is much better. You have time to play with your ideas, experiment with two or three approaches before committing to one. You're not afraid to throw away a first attempt and rebuild — because rebuilding is cheap now.
+In Chapter 6, you reached L2 — daily use of AI tools with instruction files and the plan-build-validate workflow. Every task used the same cycle: enter plan mode, review the plan, build step by step, validate with tests, commit. Your development process is already much faster. And even when it isn't faster, your quality is much better. You have time to play with your ideas, experiment with two or three approaches before committing to one. You're not afraid to throw away a first attempt and rebuild — because rebuilding is cheap now.
 
-The next step is to extend your reach beyond writing code. In this chapter, you'll learn how to create **custom skills** — reusable instruction sets that encode your team's patterns — and **custom agents** — orchestrators that combine multiple skills into a single workflow.
+The next step is to extend your reach beyond writing code. In this chapter, you'll learn how to create **custom skills** — reusable instruction sets that encode your team's patterns — and understand **custom agents** — orchestrators that combine multiple skills into a single workflow.
 
-To make it concrete, we'll build a REST Assured test agent that generates, manages, and runs API integration tests through natural language.
+To make it concrete, we'll build a REST API testing skill that generates, manages, and runs HTTP integration tests through natural language.
 
-Here's where we are on the maturity ladder from Chapter 6:
+Here's where we are on the maturity ladder:
 
-| Level | Name | How You Work |
-|-------|------|-------------|
-| 0 | **Copy-Paste** | Chat with AI in a browser. No project context. |
-| 1 | **Agent-Assisted** | CLI agent inside your project. Plan mode, instruction files, test validation. |
-| **2** | **Agent-Customized** | **Custom skills, agents, hooks. The agent works *your* way.** |
-| 3 | **Agent-Native** | Spec-driven development, multi-agent workflows. |
-| 4 | **Agent-Orchestrated** | CI/CD integration, autonomous pipelines. |
+| Level | What it looks like |
+|-------|-------------------|
+| L0 | No AI tools. No awareness. |
+| L1 | Tools installed. First supervised attempts. Copy-paste prompting. |
+| L2 | Daily individual use. Instruction files. Basic workflows: plan → build → test. |
+| **L3** | **Team-level shared practices. Reusable skills and custom instructions. Automation discovery begins.** |
+| L4 | Structured workflows: spec → plan → implement → test → review. Human is PM and reviewer. |
+| L5 | Full SDLC automated. Multi-agent orchestration. |
+| L6 | Dark Factory — fully automated. Theoretical horizon. |
 
-This chapter takes you from Level 1 to Level 2. By the end, you'll have built three skills and one orchestrator agent — all working, all reusable, all shareable with your team.
+This chapter takes you from L2 to L3. By the end, you'll have built a complete skill with templates, tooling, and a Python CLI — all working, all reusable, all shareable with your team.
 
 ---
 
-## Skills and Agents — A Quick Reference
+## Skills and Agents — Recap and Reference
 
-Chapters 3 and 4 covered the theory behind skills and agents. This section is the practical reference card you'll use while building.
+Chapters 3 and 4 covered the theory behind skills, agents, and how they fit into the agent's architecture. This section recaps the key ideas and adds practical detail you'll need while building.
 
-### Skills
+### Why Skills and Agents Exist
 
-A skill is a set of instructions the agent follows within your conversation. You invoke it, the agent reads the instructions, and it executes them step by step — using your existing session context.
+At L2, you work with instruction files (CLAUDE.md) and the plan-build-validate cycle. That works well for individual tasks. But you notice patterns:
+
+- You give the same instructions to the agent across multiple sessions
+- You explain the same conventions, the same file structure, the same workflow
+- Different team members prompt the agent differently for the same task, getting inconsistent results
+
+**Skills solve this.** A skill is reusable functionality — a set of instructions the agent can follow on demand. You write it once, and anyone on the team can invoke it. The agent produces consistent results every time, regardless of who prompted it.
+
+**Agents go further.** An agent is an autonomous persona that decides *which* skill or behavior to use based on what you asked for. You don't invoke a specific skill — you describe what you need, and the agent routes to the right behavior.
+
+### Skills — How They Work
+
+A skill is a Markdown file with instructions that the agent follows within your conversation. You invoke it, the agent reads the instructions, and executes them step by step.
+
+**Purpose:** Encode reusable functionality — testing workflows, code generation patterns, deployment steps, review checklists — so the agent does it the same way every time.
 
 | Feature | Claude Code | Copilot |
 |---------|------------|---------|
@@ -36,14 +52,56 @@ A skill is a set of instructions the agent follows within your conversation. You
 | Invocation | `/skill-name` or `/skill-name <args>` | `/skill-name` or `/skill-name <args>` |
 | Frontmatter | `name`, `description`, `argument-hint` | `name`, `description`, `argument-hint` |
 | Scope | Project (via git) or user (`~/.claude/skills/`) | Project (via git) |
-| Auto-loaded | Description only (at session start) | Description only (at session start) |
-| Full content loaded | When invoked | When invoked |
 
-The key design: **descriptions load at session start, but the full content only loads when you invoke the skill.** This keeps the agent's context lean. Ten skills with one-line descriptions cost almost nothing. Ten skills with their full instructions loaded at all times would eat your context window.
+#### How Skills Load — Two Stages
 
-### Agents
+Skills load in two stages. This is a key design decision you need to understand.
 
-An agent is a separate persona with its own context, tools, and system prompt. It goes beyond a skill — it doesn't just follow instructions, it interprets intent and routes to the right behavior.
+**Stage 1 — Description at session start.** When a session begins, the agent sees the `name` and `description` from every skill's frontmatter. These are injected as annotations on conversation messages (not in the system prompt). The agent knows what skills are available and when to suggest them. The full content is *not* loaded — just the one-line descriptions.
+
+**Stage 2 — Full content on invocation.** When you type `/skill-name`, the tool expands the full Markdown body and injects it into the conversation as if you had typed it yourself — it becomes a user message. The agent then follows those instructions using its existing session context.
+
+```
+┌─────────────────────────────────────────────────┐
+│  Session start                                  │
+│  ┌────────────────────────────────────────────┐ │
+│  │ system prompt: CLAUDE.md, MEMORY.md, rules │ │
+│  └────────────────────────────────────────────┘ │
+│  ┌────────────────────────────────────────────┐ │
+│  │ annotations: skill descriptions (names +   │ │
+│  │ one-liners for all skills)                 │ │
+│  └────────────────────────────────────────────┘ │
+│                                                 │
+│  User types: /rest-api-testing Run all tests    │
+│  ┌────────────────────────────────────────────┐ │
+│  │ user message: [full SKILL.md content]      │ │
+│  │ + "Run all tests"                          │ │
+│  └────────────────────────────────────────────┘ │
+│                                                 │
+│  Agent follows skill instructions...            │
+└─────────────────────────────────────────────────┘
+```
+
+**Why this matters:**
+
+- **Descriptions are cheap.** Twenty skills with one-line descriptions cost almost nothing. The agent sees them all and can suggest the right one.
+- **Full content is expensive.** A 200-line skill body consumes context. It only loads when needed — and it loads into the *conversation*, not the system prompt. That means it can get compacted in very long sessions, just like any other message.
+- **Skills share your context.** Because the skill content becomes a conversation message, the agent has access to everything it already knows — files it read, conversation history, your earlier decisions. The skill doesn't start fresh; it builds on your current session.
+
+#### Auto-Triggering
+
+Skills can be triggered in two ways:
+
+1. **Manual invocation.** You type `/skill-name`. This is the most common pattern.
+2. **Auto-triggered by the agent.** If the agent's description matching determines that a skill is relevant to your request, it can invoke the skill automatically — you don't have to type the slash command. This depends on how the description is written. A description like *"Use when creating REST API integration tests"* tells the agent exactly when to activate.
+
+This is why writing good descriptions matters. The description is the agent's routing table.
+
+### Agents — How They Work
+
+An agent is a separate persona with its own context, tools, and behavior. It goes beyond a skill — it doesn't just follow instructions, it interprets intent and decides what to do.
+
+**Purpose:** Orchestrate multiple behaviors from a single entry point. The user describes what they need in natural language; the agent figures out which steps to take.
 
 | Feature | Claude Code | Copilot |
 |---------|------------|---------|
@@ -51,9 +109,49 @@ An agent is a separate persona with its own context, tools, and system prompt. I
 | Agent file | `.claude/skills/<name>/SKILL.md` | `.github/agents/<name>.agent.md` |
 | Invocation | `/agent-name <prompt>` | `@agent-name <prompt>` |
 | Tool restrictions | Not natively supported | `tools:` field in frontmatter |
-| Own context | Via subagent dispatch | Yes, gets isolated context |
 
-The key difference: **a skill is a recipe the agent follows. An agent is a persona that decides which recipes to use.** A skill says "do these steps." An agent says "understand what the user wants, then pick the right steps."
+#### How Agents Load
+
+Agents load differently depending on the platform:
+
+**Claude Code:** An "agent" is technically a skill — same file format, same loading mechanism. The difference is in the *content*: instead of step-by-step instructions, it contains intent-parsing logic and routing to different behaviors. It loads into the conversation as a user message, just like any skill. It shares your session context.
+
+**Copilot:** An `.agent.md` file gets its **own isolated context**. When you invoke `@agent-name`, Copilot spawns a separate context window with its own system message (the agent's instructions) and its own conversation. The agent never sees your prior conversation history — it starts fresh. When it finishes, its result comes back to your main session as a tool result.
+
+```
+┌─────────────────────────────────────────────────┐
+│  Claude Code: agent as skill                    │
+│  ┌────────────────────────────────────────────┐ │
+│  │ Your existing conversation context         │ │
+│  │ + agent skill content (user message)       │ │
+│  │ → agent sees everything you've discussed   │ │
+│  └────────────────────────────────────────────┘ │
+│                                                 │
+│  Copilot: agent as isolated persona             │
+│  ┌────────────────────────────────────────────┐ │
+│  │ Separate context window                    │ │
+│  │ system message: agent's instructions       │ │
+│  │ → agent sees ONLY its own instructions     │ │
+│  │ → result returns to your session           │ │
+│  └────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────┘
+```
+
+### Skills vs Agents — Side by Side
+
+| Aspect | Skill | Agent |
+|--------|-------|-------|
+| **Purpose** | Reusable functionality — do this task the same way every time | Orchestration — understand what the user wants, route to the right behavior |
+| **Behavior** | Fixed: always follows the same steps | Dynamic: parses intent, picks different paths based on input |
+| **Context** | Shares the current session (conversation, files read, history) | Claude Code: shares session. Copilot: isolated context window |
+| **Where it loads** | Description: annotation on messages. Full content: user message in conversation | Claude Code: same as skill. Copilot: own system message in separate context |
+| **Invocation** | Manual (`/skill-name`) or auto-triggered by description match | Manual (`/agent-name` or `@agent-name`) |
+| **Tool access** | All tools the main agent has | Claude Code: all tools. Copilot: restricted via `tools:` frontmatter |
+| **Composability** | Standalone — one skill, one task | Can chain multiple skills or behaviors in sequence |
+| **Complexity** | Low — write instructions, done | Higher — needs intent parsing, routing logic, error handling across steps |
+| **When to use** | You give the same instructions more than once | You invoke multiple skills in sequence to accomplish one goal |
+
+**The rule of thumb:** if you find yourself giving the same instructions twice, write a skill. If you find yourself invoking three skills in sequence every time, write an agent.
 
 ### Hooks
 
@@ -61,9 +159,54 @@ There's a third extensibility mechanism: **hooks**. Hooks are shell commands tha
 
 We won't build hooks in this chapter, but know they exist. Skills, agents, and hooks are the three ways you customize an AI coding agent.
 
+### Where Everything Lives in the Agent's Context
+
+To tie it all together, here's where each customization mechanism lands in the agent's message flow:
+
+| What you define | Where it lands | When the agent sees it | Survives compaction? |
+|---|---|---|---|
+| CLAUDE.md, MEMORY.md | System message | Always — highest priority | Yes (system message is never compacted) |
+| Rules (`.claude/rules/`) | System message (when glob matches) | When the agent touches matching files | Yes |
+| Skill descriptions | Annotations on conversation messages | Session start, re-injected periodically | Partially (can be re-injected) |
+| Skill full content | Conversation (as user message) | Only when invoked | No (compacted like any message) |
+| Agent persona (Copilot) | Separate system message (isolated context) | Only the agent sees it | Yes (within its own context) |
+| Agent result | Tool result (main conversation) | After the agent finishes | No (compacted like any message) |
+
+**The practical implication:** CLAUDE.md and rules are permanent — they survive any conversation length. Skill content is ephemeral — it loads on demand and gets compacted when the conversation grows long. Design your skills to be self-contained: every invocation should include everything the agent needs, because it can't rely on prior invocations still being in context.
+
+### A Skill Is a Folder, Not a File
+
+This is easy to miss but important: a skill is a **folder** containing a `SKILL.md` file — not just the file itself. The folder is the skill's workspace. You can put anything next to `SKILL.md`:
+
+```
+.claude/skills/rest-api-testing/
+├── SKILL.md                    # Instructions the agent follows
+├── USAGE.md                    # Human-readable usage guide
+├── code/
+│   └── test_manager.py         # Python CLI the skill references
+└── templates/
+    ├── get.hurl                # Templates the skill uses to generate tests
+    ├── post.hurl
+    ├── put.hurl
+    └── delete.hurl
+```
+
+The agent can read any file in the skill folder. The skill instructions in `SKILL.md` can reference templates (`"pick the matching template from templates/"`), invoke code (`"run test_manager.py init"`), or point to documentation (`"see USAGE.md for installation"`). The folder structure turns a skill from a set of instructions into a **self-contained toolkit** — instructions plus the code, templates, and data they operate on.
+
+This is a big difference from instruction files like CLAUDE.md, which are single files with text. A skill folder can carry its own implementation.
+
 ### Anatomy of a SKILL.md
 
-Every skill file follows this structure:
+The `SKILL.md` file format is the same for Claude Code and Copilot — same frontmatter, same Markdown body, same structure. A skill written for one platform generally works on the other without changes. The only difference is where you put the folder:
+
+| Platform | Skill location |
+|----------|---------------|
+| Claude Code | `.claude/skills/<name>/SKILL.md` |
+| Copilot | `.github/skills/<name>/SKILL.md` |
+
+In practice, skills are backward-compatible across platforms. The frontmatter fields (`name`, `description`, `argument-hint`) are recognized by both. The Markdown body is just instructions — any agent can follow them. If your skill references platform-specific features (like Claude Code's subagent dispatch), those parts won't work on the other platform, but the core workflow usually transfers directly.
+
+**The file structure:**
 
 ```markdown
 ---
@@ -80,44 +223,164 @@ Step-by-step, imperative, specific.
 
 The frontmatter is YAML. The body is Markdown. Write the body as if you're giving instructions to a capable but literal junior developer: step by step, no ambiguity, no assumptions.
 
+### Designing a Skill — Structure and Best Practices
+
+A skill folder can contain anything, but good skills follow a consistent structure. Here's the pattern we use for the REST API testing skill — and the reasoning behind each part.
+
+#### The Recommended Folder Layout
+
+```
+.claude/skills/<skill-name>/
+├── SKILL.md              # Instructions for the agent (loaded on invocation)
+├── USAGE.md              # Instructions for humans (never loaded by the agent)
+├── code/                 # Executable code the skill references
+│   └── tool.py           # CLI, scripts, helpers
+└── templates/            # Starting points for generated files
+    ├── template-a.ext
+    └── template-b.ext
+```
+
+Four parts, each with a distinct role:
+
+| Part | Audience | Purpose |
+|------|----------|---------|
+| `SKILL.md` | The agent | What the agent reads and follows when the skill is invoked |
+| `USAGE.md` | Humans | Setup instructions, prerequisites, example prompts — for the developer reading the repo, not for the agent |
+| `code/` | The agent (via execution) | Scripts and tools the agent runs as part of the skill workflow |
+| `templates/` | The agent (via reading) | Starter files the agent reads, customizes, and writes to the project |
+
+#### Separating SKILL.md from USAGE.md
+
+`SKILL.md` is loaded into the agent's context on invocation. Every line costs tokens. Write it for the agent — imperative instructions, quick reference tables, precise commands.
+
+`USAGE.md` is for humans browsing the repository. It can be verbose — installation steps, troubleshooting, example prompts, platform-specific setup guides. The agent never sees it unless you explicitly tell it to read the file.
+
+**Don't put human documentation in SKILL.md.** A 300-line SKILL.md that includes installation instructions, troubleshooting sections, and verbose examples wastes context every time the skill is invoked. Move that to USAGE.md and keep SKILL.md lean.
+
+#### The `code/` Folder — Token Efficiency Through Tooling
+
+This is the most important best practice: **move complexity out of SKILL.md and into code.**
+
+Consider two approaches to the same task — running tests and reporting results:
+
+**Approach A — Instructions in SKILL.md (expensive):**
+```markdown
+## Running tests
+
+1. Find all .hurl files registered in inventory.json
+2. For each file, run: hurl --test --variable base_url=<url> <file>
+3. Capture stdout and stderr
+4. Parse the output to extract pass/fail status
+5. If multiple tests, build a summary table with columns: Test, Status, HTTP, Time
+6. If single test, parse the JSON report for assertions and show each one
+7. Calculate totals: passed, failed, skipped
+8. Format the output as...
+   [20 more lines of formatting instructions]
+```
+
+Every time the skill is invoked, these 30+ lines load into context. The agent has to interpret them, and the output quality depends on how well the agent parses raw Hurl output.
+
+**Approach B — Code in `code/` (efficient):**
+```markdown
+## Running tests
+
+- **All tests:** `test_manager.py run-all`
+- **One suite:** `test_manager.py run-suite <suite>`
+- **Specific tests:** `test_manager.py run <name1> <name2>`
+```
+
+Three lines. The parsing, formatting, error handling, and structured output all live in `test_manager.py` — code that runs deterministically, not instructions that the agent interprets. The agent just runs the command and gets clean output.
+
+**The rule:** if the agent is doing the same multi-step data processing every time — parsing output, building tables, managing JSON files, resolving paths — put it in a script. The skill instruction becomes a one-line command. You save tokens, get consistent results, and make the skill easier to maintain.
+
+What belongs in `code/`:
+- **CLI tools** that the agent invokes (like `test_manager.py`)
+- **Parsers** for structured output (test results, API responses, log files)
+- **Generators** that produce files from templates programmatically
+- **Validators** that check prerequisites, syntax, or configuration
+
+What does *not* belong in `code/`:
+- Business logic that should live in the project itself
+- One-off scripts that only work for a specific project
+
+#### The `templates/` Folder — Consistent Generation
+
+Templates are starter files the agent reads and customizes. They enforce consistency without long lists of formatting rules in SKILL.md.
+
+A template like `get.hurl`:
+```hurl
+# Test: {{test_name}}
+# Suite: {{suite}}
+# Endpoint: GET {{endpoint}}
+
+GET {{base_url}}{{endpoint}}
+HTTP 200
+[Asserts]
+header "Content-Type" contains "application/json"
+```
+
+This is more effective than writing in SKILL.md: *"Every test file must start with a comment block containing the test name, suite, and endpoint. Then write the HTTP method and URL using the base_url variable. Then add HTTP 200 for the expected status. Then add an [Asserts] section..."* The template shows the format in 8 lines. The instructions would take 20 lines to describe it and still leave room for interpretation.
+
+**Templates teach by example.** The agent reads the template, sees the structure, and replicates it with the right values. This is how humans learn too — patterns are easier to follow than rules.
+
+Good templates:
+- Are **minimal** — show the structure, not every possible variation
+- Use **placeholder values** that make the structure obvious (`{{test_name}}`, `{{endpoint}}`)
+- Include **one example of each convention** (comment header, variable usage, assertion style)
+- Are **real files** in the format the skill generates (`.hurl`, `.java`, `.yaml` — not pseudocode)
+
+#### Putting It Together — The Token Budget
+
+When the skill is invoked, the agent's context gets:
+
+| What | Tokens (approximate) | Where it lives |
+|------|---------------------|---------------|
+| SKILL.md body | 200–500 | Loaded into conversation |
+| Templates (when the agent reads them) | 50–100 each | Read tool results |
+| CLI output (when the agent runs commands) | Varies | Tool results |
+| USAGE.md | 0 | Never loaded unless explicitly read |
+| Code files | 0 | Executed, not loaded into context |
+
+The goal is to keep SKILL.md under ~500 tokens of instruction. Everything else — templates, code, documentation — lives in the folder but only enters context when the agent actively reads or runs it. This is the token efficiency advantage of the folder structure: the skill *has* 1000+ lines of code and templates, but the agent only *loads* what it needs for the current step.
+
 ---
 
 ## What We're Building
 
-We're building a **REST Assured test agent** — an orchestrator that manages API test cases through natural language. It has three skills and one agent that ties them together.
+We're building a **REST API testing skill** — a single, comprehensive skill that creates, manages, and runs HTTP integration tests through natural language. The skill uses [Hurl](https://hurl.dev) for declarative HTTP test files and a Python CLI for inventory management.
 
 ```mermaid
 graph TD
-    User["User"] -->|"/rest-test-agent <prompt>"| Agent["rest-test-agent<br/><i>Orchestrator</i>"]
-    Agent -->|"intent: list"| List["rest-test-list<br/><i>Read inventory, show summary</i>"]
-    Agent -->|"intent: create"| Create["rest-test-create<br/><i>Generate test cases</i>"]
-    Agent -->|"intent: run"| Run["rest-test-run<br/><i>Execute tests, debug failures</i>"]
-    Agent -->|"intent: full-coverage"| Full["Full Coverage Mode<br/><i>List → Create → Run → Fix</i>"]
+    User["User"] -->|"/rest-api-testing"| Skill["rest-api-testing<br/><i>Skill</i>"]
+    Skill -->|"initialize"| Init["Init<br/><i>Create test directory + inventory</i>"]
+    Skill -->|"create tests"| Create["Create<br/><i>Generate .hurl files from templates</i>"]
+    Skill -->|"run tests"| Run["Run<br/><i>Execute with Hurl CLI</i>"]
+    Skill -->|"manage inventory"| Manage["Manage<br/><i>Add, remove, list tests</i>"]
 
     Create -.->|"validate"| Run
-    List --> Inventory["test-inventory.json"]
-    Create --> Inventory
-    Create --> Maven["generated-tests/<br/>Maven project"]
-    Run --> Maven
+    Manage --> Inventory["inventory.json"]
+    Create --> Templates["templates/<br/>get, post, put, delete"]
+    Create --> Tests["integration-tests/<br/>smoke, crud, validation"]
+    Run --> Tests
 
-    style Agent fill:#dbeafe,stroke:#2563eb
-    style List fill:#d1fae5,stroke:#059669
+    style Skill fill:#dbeafe,stroke:#2563eb
+    style Init fill:#d1fae5,stroke:#059669
     style Create fill:#fef3c7,stroke:#d97706
     style Run fill:#fce7f3,stroke:#db2777
-    style Full fill:#e0e7ff,stroke:#4338ca
+    style Manage fill:#e0e7ff,stroke:#4338ca
     style Inventory fill:#f3f4f6,stroke:#6b7280
-    style Maven fill:#f3f4f6,stroke:#6b7280
+    style Templates fill:#f3f4f6,stroke:#6b7280
+    style Tests fill:#f3f4f6,stroke:#6b7280
 ```
 
-### The Three Modes
+### What the Skill Does
 
-| Mode | What it does | When you use it |
-|------|-------------|----------------|
-| **List** | Reads `test-inventory.json` and shows all existing tests, grouped by class | Before creating tests — to see what's already covered |
-| **Create** | Generates REST Assured test methods from a natural language description | When you need new test cases for an endpoint |
-| **Run** | Executes tests, reports results, diagnoses failures, offers to fix | After creating tests — to verify they work |
-
-The orchestrator agent combines all three. You say "I need full test coverage for the JSONPlaceholder API" and it lists what exists, identifies gaps, creates missing tests, runs them, and fixes failures — all in one flow.
+| Action | What it does | When you use it |
+|--------|-------------|----------------|
+| **Initialize** | Creates `integration-tests/` with inventory and suite folders | First-time setup for a new API |
+| **Create** | Generates `.hurl` test files from templates, registers them in inventory | When you need tests for an endpoint |
+| **Run** | Executes tests with Hurl CLI, reports structured results | After creating tests — to verify they work |
+| **Manage** | List, add, remove tests from the inventory | To see what's covered or clean up |
 
 ### The Target API
 
@@ -127,496 +390,497 @@ All tests run against [JSONPlaceholder](https://jsonplaceholder.typicode.com) �
 
 ```
 code/
-├── generated-tests/
-│   ├── pom.xml
-│   ├── test-inventory.json
-│   ├── src/test/java/tests/
-│   │   ├── PostsApiTest.java
-│   │   ├── CommentsApiTest.java
-│   │   ├── UsersApiTest.java
-│   │   └── TodosApiTest.java
-│   └── src/test/resources/
-│       └── test-config.properties
-├── .claude/skills/
-│   ├── rest-test-list/SKILL.md
-│   ├── rest-test-create/SKILL.md
-│   ├── rest-test-run/SKILL.md
-│   └── rest-test-agent/SKILL.md
-└── .github/
-    ├── skills/
-    │   ├── rest-test-list/SKILL.md
-    │   ├── rest-test-create/SKILL.md
-    │   └── rest-test-run/SKILL.md
-    └── agents/
-        └── rest-test-agent.agent.md
+├── rest-api-testing/                  # The skill
+│   ├── SKILL.md                       # Skill instructions
+│   ├── USAGE.md                       # Human-readable usage guide
+│   ├── code/
+│   │   └── test_manager.py            # Python CLI for inventory + test runner
+│   └── templates/
+│       ├── get.hurl                   # GET request template
+│       ├── post.hurl                  # POST request template
+│       ├── put.hurl                   # PUT request template
+│       ├── delete.hurl                # DELETE request template
+│       └── inventory.template.json    # Empty inventory template
+└── integration-tests/                 # Generated test files
+    ├── inventory.json                 # Test registry (managed by test_manager.py)
+    ├── smoke/                         # Quick health checks
+    │   ├── get-posts.hurl
+    │   └── get-users.hurl
+    ├── crud/                          # Full CRUD operations
+    │   ├── create-post.hurl
+    │   ├── update-post.hurl
+    │   └── delete-post.hurl
+    └── validation/                    # Error cases, edge cases
+        └── get-invalid-post.hurl
 ```
 
-The `generated-tests/` folder is a standard Maven project. The `.claude/` and `.github/` folders contain the skill and agent files for Claude Code and Copilot respectively. The test inventory tracks every test in a JSON file so skills can read it without parsing Java source every time.
+The skill lives in `rest-api-testing/` with its instructions, templates, and tooling. The `integration-tests/` folder holds the generated test files and inventory. When deployed, the skill goes into `.claude/skills/rest-api-testing/` and the tests go into `integration-tests/` at the project root.
 
 ---
 
-## Building the Skills — Step by Step
+## Building the Skill — Step by Step
 
-### Skill 1: rest-test-list
+### The SKILL.md
 
-**What it does:** Reads the test inventory and presents a grouped summary of all existing tests.
+This is the heart of the skill — the instructions the agent follows when you invoke `/rest-api-testing`.
 
-**Why it exists:** Before creating new tests, you need to know what's already covered. Without this skill, you'd ask the agent to scan Java files every time — slow, inconsistent, and verbose. The list skill gives you a clean, instant overview.
-
-**The full SKILL.md (Claude Code):**
+**The full SKILL.md:**
 
 ```markdown
 ---
-name: rest-test-list
-description: List all existing REST Assured test cases from the inventory
+name: rest-api-testing
+description: Use when creating, managing, or running REST API integration tests,
+  or when the user asks to test HTTP endpoints, verify API behavior, or set up
+  integration test suites
 ---
 
-# rest-test-list
+# REST API Testing
 
-List all existing REST Assured tests in this project, grouped by test class.
+## Overview
 
-## Steps
+Create, manage, and run REST API integration tests using Hurl (declarative HTTP
+test files) and a Python CLI for inventory management. Tests are `.hurl` files
+organized by suite in `integration-tests/`.
 
-### 1. Read the inventory
+## Prerequisites
 
-Read the file `generated-tests/test-inventory.json`.
+- **Hurl CLI** installed (`hurl --version`). Install: https://hurl.dev
+- **Python 3** available
 
-- If the file exists and contains a non-empty `tests` array, proceed to **Step 3**.
-- If the file is missing, empty, or the `tests` array is empty, proceed to **Step 2**.
+## Quick Reference
 
-### 2. Rebuild the inventory from source
+| Action | Command |
+|--------|---------|
+| Initialize | `python <skill>/code/test_manager.py init <base_url>` |
+| Add test to inventory | `python <skill>/code/test_manager.py add <name> <suite> <method> <endpoint> "<description>"` |
+| Remove test | `python <skill>/code/test_manager.py remove <name>` |
+| List all tests | `python <skill>/code/test_manager.py list` |
+| List by suite | `python <skill>/code/test_manager.py list --suite smoke` |
+| List by method | `python <skill>/code/test_manager.py list --method GET` |
+| Run all tests | `python <skill>/code/test_manager.py run-all` |
+| Run a suite | `python <skill>/code/test_manager.py run-suite smoke` |
+| Run specific tests | `python <skill>/code/test_manager.py run get-posts get-users` |
 
-Scan all files matching `generated-tests/src/test/java/tests/*Test.java`.
+Replace `<skill>` with the path to `.claude/skills/rest-api-testing`.
 
-For each file, extract:
-- The class name (from the filename or `class` declaration)
-- Every `@Test` method: method name, `@DisplayName` value, `@Tag` value(s)
-- The `@Tag` annotation at class level (this is the resource tag)
+## Workflow
 
-Build a JSON structure matching this format and write it to
-`generated-tests/test-inventory.json`:
+### First-time setup
 
+1. Check prerequisites: `hurl --version` and `python3 --version`
+2. Run `test_manager.py init <base_url>` to create `integration-tests/` with
+   inventory and default suite folders (smoke, crud, validation)
+
+### Creating tests
+
+1. Ask the user which endpoints or scenarios to test
+2. Pick the matching template from `templates/` (get.hurl, post.hurl, put.hurl,
+   delete.hurl)
+3. Customize the template: set endpoint, assertions, request body as needed
+4. Write the `.hurl` file to `integration-tests/<suite>/<test-name>.hurl`
+5. Register in inventory: `test_manager.py add <name> <suite> <method> <endpoint>
+   "<description>"`
+6. Run the new test to verify: `test_manager.py run <name>`
+
+### Running tests
+
+- **All tests:** `test_manager.py run-all`
+- **One suite:** `test_manager.py run-suite <suite>`
+- **Specific tests:** `test_manager.py run <name1> <name2>`
+
+**Output rule:** When running a single test, do not summarize or reformat
+successful output — the CLI output speaks for itself. Only add commentary when
+tests fail or the user asks a question.
+
+### Handling failures
+
+When tests fail:
+1. Show the failure output to the user (status code, expected vs actual,
+   response body)
+2. Ask: "Would you like me to analyze the failure and suggest a fix?"
+3. If yes: read relevant project source files and suggest a fix
+4. If no: move on
+
+## Hurl File Format
+
+    # Test: get-posts
+    # Suite: smoke
+    # Endpoint: GET /posts
+
+    GET {{base_url}}/posts
+    HTTP 200
+    [Asserts]
+    header "Content-Type" contains "application/json"
+    jsonpath "$" count > 0
+
+- `{{base_url}}` is injected at runtime by test_manager.py from inventory
+- Comments at the top are metadata (test name, suite, endpoint)
+- `HTTP 200` is the expected status code
+- `[Asserts]` section contains explicit assertions
+
+## Common Assertions
+
+| Assertion | Example |
+|-----------|---------|
+| Status code | `HTTP 200` |
+| Header value | `header "Content-Type" contains "application/json"` |
+| JSON field exists | `jsonpath "$.id" exists` |
+| JSON field value | `jsonpath "$.title" == "foo"` |
+| Array count | `jsonpath "$" count == 10` |
+| Array not empty | `jsonpath "$" count > 0` |
+| Regex match | `jsonpath "$.email" matches /\S+@\S+/` |
+| Field is string | `jsonpath "$.name" isString` |
+| Field is integer | `jsonpath "$.id" isInteger` |
+
+## Test Organization
+
+    integration-tests/
+    ├── smoke/          # Quick health checks (GET endpoints, basic connectivity)
+    ├── crud/           # Full CRUD operations (create, read, update, delete)
+    ├── validation/     # Error cases, edge cases, invalid inputs
+    └── inventory.json  # Test registry (managed by test_manager.py)
+
+Create new suite folders as needed for your project's testing needs.
+
+## Windows / Git Bash Note
+
+Git Bash auto-converts arguments starting with `/` to Windows paths. When calling
+`test_manager.py add` with endpoint arguments, prefix the command:
+
+    MSYS_NO_PATHCONV=1 python <skill>/code/test_manager.py add get-posts smoke GET /posts "description"
+
+This is only needed in Git Bash. PowerShell, cmd.exe, and programmatic calls
+are unaffected.
+```
+
+Let's break down the key design decisions.
+
+---
+
+### Decision 1: One Comprehensive Skill
+
+The listing, creating, and running behaviors are tightly coupled. They all work with the same inventory, the same file structure, the same templates. One comprehensive skill is simpler, easier to maintain, and just as effective. The agent reads one file and has everything it needs. The Quick Reference table at the top serves as the routing mechanism — the agent picks the right command based on what the user asked for.
+
+**When to split:** If your behaviors need different tool permissions, different contexts, or will be composed by multiple agents, split them. If they all operate on the same data in the same way, keep them together.
+
+### Decision 2: Templates as Starting Points
+
+The skill includes four `.hurl` templates — one per HTTP method:
+
+**GET template:**
+```hurl
+# Test: {{test_name}}
+# Suite: {{suite}}
+# Endpoint: GET {{endpoint}}
+
+GET {{base_url}}{{endpoint}}
+HTTP 200
+[Asserts]
+header "Content-Type" contains "application/json"
+```
+
+**POST template:**
+```hurl
+# Test: {{test_name}}
+# Suite: {{suite}}
+# Endpoint: POST {{endpoint}}
+
+POST {{base_url}}{{endpoint}}
+Content-Type: application/json
 {
-  "lastUpdated": "<current ISO timestamp>",
+  "title": "test",
+  "body": "test body",
+  "userId": 1
+}
+HTTP 201
+[Asserts]
+header "Content-Type" contains "application/json"
+jsonpath "$.id" exists
+```
+
+Templates give the agent a starting point, not a finished product. The agent reads the template, understands the structure, then customizes it with the right endpoint, assertions, and request body. The result is consistent formatting across all tests — same comment header, same assertion style — while the content varies per endpoint.
+
+**PUT template:**
+```hurl
+# Test: {{test_name}}
+# Suite: {{suite}}
+# Endpoint: PUT {{endpoint}}
+
+PUT {{base_url}}{{endpoint}}
+Content-Type: application/json
+{
+  "id": 1,
+  "title": "updated",
+  "body": "updated body",
+  "userId": 1
+}
+HTTP 200
+[Asserts]
+header "Content-Type" contains "application/json"
+```
+
+**DELETE template:**
+```hurl
+# Test: {{test_name}}
+# Suite: {{suite}}
+# Endpoint: DELETE {{endpoint}}
+
+DELETE {{base_url}}{{endpoint}}
+HTTP 200
+```
+
+### Decision 3: A Python CLI for the Agent
+
+Inventory management — tracking which tests exist, what they cover, which suite they belong to — needs structured data. JSON files need to be read, updated, and written back consistently. A CLI tool handles this cleanly.
+
+`test_manager.py` is a single Python file (~460 lines) with clear subcommands:
+
+```bash
+# Initialize a new test suite
+python test_manager.py init https://jsonplaceholder.typicode.com
+
+# Add a test to the inventory
+python test_manager.py add get-posts smoke GET /posts "Verify GET /posts returns 100 posts"
+
+# List all tests
+python test_manager.py list
+
+# Run all tests
+python test_manager.py run-all
+
+# Run a specific suite
+python test_manager.py run-suite smoke
+
+# Run specific tests by name
+python test_manager.py run get-posts get-users
+```
+
+The CLI wraps Hurl with inventory awareness. When you run `test_manager.py run-all`, it reads `inventory.json` to find all test files, then calls Hurl with the right arguments. When you run a single test, it shows detailed output — HTTP status, response body, assertion results. When you run multiple tests, it shows a summary table.
+
+This is a pattern worth copying: **give the agent a CLI tool, not raw commands.** The CLI encapsulates complexity (finding files, building arguments, parsing output) and gives the agent a clean interface.
+
+### Decision 4: The Inventory File
+
+`inventory.json` tracks every test in a structured format:
+
+```json
+{
+  "base_url": "https://jsonplaceholder.typicode.com",
   "tests": [
     {
-      "class": "PostsApiTest",
-      "method": "should_returnAllPosts_whenGetPosts",
-      "displayName": "GET /posts returns all posts with status 200",
-      "tag": "posts",
-      "endpoint": "GET /posts",
-      "created": "<date found in file or today>"
+      "name": "get-posts",
+      "suite": "smoke",
+      "file": "smoke/get-posts.hurl",
+      "method": "GET",
+      "endpoint": "/posts",
+      "description": "Verify GET /posts returns 100 posts with correct structure"
+    },
+    {
+      "name": "create-post",
+      "suite": "crud",
+      "file": "crud/create-post.hurl",
+      "method": "POST",
+      "endpoint": "/posts",
+      "description": "Verify POST /posts creates a new post"
     }
   ]
 }
-
-Infer the `endpoint` field from the `@DisplayName` text where possible
-(it usually starts with the HTTP method and path). If you cannot infer it,
-leave it as an empty string.
-
-### 3. Present the summary table
-
-Group the tests by `class`. For each class, show:
-
-PostsApiTest (5 tests)  [tag: posts]
-  - GET /posts returns all posts with status 200
-  - GET /posts/{id} returns a single post
-  - POST /posts creates a new post and returns 201
-  - PUT /posts/{id} updates an existing post
-  - DELETE /posts/{id} returns 200
-
-CommentsApiTest (2 tests)  [tag: comments]
-  - GET /posts/{id}/comments returns comments for a post
-  - GET /comments?postId={id} returns filtered comments
-
-After the list, print a one-line summary:
-
-Total: <N> tests across <M> test classes.
-
-## Notes
-
-- Use the `displayName` field for the indented list items, not the method name.
-- Sort classes alphabetically.
-- If a class has no `@DisplayName` on its test methods, fall back to the method name.
-- Do not run any tests — this skill is read-only.
 ```
 
-**Key design decisions:**
+This gives you:
 
-1. **The inventory pattern.** Instead of scanning Java source files every time, the skill reads a JSON file. Fast reads, consistent format, and other skills can update it. The JSON becomes the single source of truth. Step 2 is a fallback — it rebuilds the inventory from source if the file is missing or empty. This means the skill never dead-ends.
+- **Fast reads.** The agent reads one JSON file instead of scanning `.hurl` files.
+- **Filtering.** List by suite, by HTTP method, or by name — without parsing file contents.
+- **Duplicate detection.** Before creating a test, the agent checks the inventory.
+- **Cross-session persistence.** The inventory survives between sessions. A new session picks up exactly where the last one left off.
+- **Base URL in one place.** All tests use `{{base_url}}` — the actual URL lives in the inventory, not scattered across test files.
 
-2. **Read-only.** The list skill never modifies tests. It only reads. This makes it safe to run anytime — you can't break anything.
+### Decision 5: Suite-Based Organization
 
-3. **Grouped output.** Tests are grouped by class, with counts and tags. This is scannable — you see coverage at a glance instead of scrolling through a flat list.
+Tests are organized into suites by folder:
 
-> The Copilot version follows the same logic. You'll find it in `.github/skills/rest-test-list/SKILL.md` in the companion code.
-
----
-
-### Skill 2: rest-test-create
-
-**What it does:** Generates REST Assured test methods from a natural language description and adds them to the appropriate test class.
-
-**Why it exists:** Writing REST Assured tests is repetitive. The structure is always the same: setup, `given/when/then`, assertions. The details change (endpoint, method, body, assertions), but the pattern doesn't. This skill encodes the pattern so the agent generates consistent, convention-following tests every time.
-
-**The full SKILL.md (Claude Code):**
-
-```markdown
----
-name: rest-test-create
-description: Generate REST Assured test cases from a natural language description
-argument-hint: Describe the endpoint or tests you want to create
----
-
-# rest-test-create
-
-Generate new REST Assured test methods based on a description of the endpoint
-or scenario you want to test.
-
-## Step 1: Discover the API
-
-Work through these three options in order. Stop at the first one that yields
-results.
-
-**Option A — OpenAPI/Swagger spec**
-
-Search for spec files in the project:
-- Files matching `*.yaml` or `*.json` that contain the key `openapi` or
-  `swagger` at the top level
-- Check `generated-tests/src/test/resources/` and the project root first
-
-If found, extract endpoint definitions (method, path, request body schema,
-response schema) from the spec.
-
-**Option B — Scan source for controllers/routes**
-
-Search for route or controller definitions in `generated-tests/src/`:
-- Java: classes annotated with `@RestController`, `@Controller`, `@Path`,
-  or methods with `@GetMapping`, `@PostMapping`, `@RequestMapping`, etc.
-- Extract HTTP method and path from each annotation.
-
-**Option C — Ask the user**
-
-If neither A nor B produced results, ask the user to provide:
-- HTTP method (GET, POST, PUT, DELETE, PATCH)
-- Path (e.g. `/albums/{id}`)
-- Expected request body (if any)
-- Expected response shape (fields and types)
-- Expected status codes
-
-Do not proceed until you have this information.
-
-## Step 2: Understand what the user wants
-
-Parse the argument the user passed to this skill. They may have said
-something like:
-- `"test the /albums endpoint"` → create tests for all standard CRUD
-  operations on `/albums`
-- `"add a test for creating a comment"` → create a POST test for `/comments`
-- `"test that GET /users/{id} returns 404 for a missing user"` → create a
-  single targeted test
-
-If the argument is vague, infer reasonable tests based on the HTTP method:
-- GET (collection) → returns 200, returns list, validates at least one field
-- GET (by ID) → returns 200 with correct ID, returns 404 for unknown ID
-- POST → returns 201, response contains the created resource with an ID
-- PUT → returns 200, response reflects updated values
-- DELETE → returns 200
-
-## Step 3: Read existing tests to match patterns
-
-Before writing any code, read the existing test files in
-`generated-tests/src/test/java/tests/`.
-
-Use `PostsApiTest.java` as the canonical template. Observe:
-- How `@BeforeAll` loads `test-config.properties` and sets
-  `RestAssured.baseURI`
-- How `given/when/then` blocks are structured and indented
-- How request bodies are written using Java text blocks (`"""..."""`)
-- How assertions use Hamcrest matchers (`equalTo`, `notNullValue`,
-  `hasSize`, etc.)
-
-**Check for duplicates:** Read `generated-tests/test-inventory.json`. If a
-test for the same endpoint and HTTP method already exists in the same class,
-skip it and inform the user.
-
-## Step 4: Determine the target class
-
-- Identify the resource name from the endpoint path (e.g. `/albums` →
-  resource is `albums`).
-- Look for an existing class named `<Resource>ApiTest`
-  (e.g. `AlbumsApiTest.java`).
-- If it exists, add the new test method(s) to that class.
-- If it does not exist, create a new class file using `PostsApiTest.java`
-  as a template. Replace:
-  - The class-level `@Tag` value with the resource name
-  - The `@DisplayName` on the class with `"<Resource> API Tests"`
-  - The `@BeforeAll` class reference (`PostsApiTest.class` →
-    `AlbumsApiTest.class`)
-
-## Step 5: Apply naming and annotation conventions
-
-Every test method you generate must follow these conventions:
-
-| Convention | Rule |
-|---|---|
-| Method name | `should_<result>_when<Condition>` — camelCase, descriptive |
-| `@Test` | Always present |
-| `@DisplayName` | Human-readable sentence, start with `<METHOD> <path>` |
-| `@Tag` | Same tag as the class-level `@Tag` (the resource name) |
-| REST Assured style | `given()` → `.contentType(ContentType.JSON)` → `when()` → `.get/post/put/delete(path)` → `then()` → assertions |
-| Base URL | Never hardcode — always loaded from `test-config.properties` via `RestAssured.baseURI` |
-| Request body | Use Java text blocks (`"""..."""`) for readability |
-
-## Step 6: Write the code
-
-Insert the new test method(s) into the target class file. Place new methods
-at the end of the class, before the closing `}`.
-
-If creating a new class file, write the full file including the package
-declaration, imports, and class scaffolding.
-
-## Step 7: Verify compilation
-
-Run the Maven test-compile goal to check for syntax errors:
-
-mvn test-compile -f generated-tests/pom.xml
-
-- If compilation succeeds, proceed to Step 8.
-- If compilation fails, read the error output, fix the issues in the
-  generated code, and re-run. Repeat until clean.
-
-## Step 8: Update the inventory
-
-Read `generated-tests/test-inventory.json`. For each new test method you
-added, append an entry to the `tests` array:
-
-{
-  "class": "AlbumsApiTest",
-  "method": "should_returnAllAlbums_whenGetAlbums",
-  "displayName": "GET /albums returns all albums with status 200",
-  "tag": "albums",
-  "endpoint": "GET /albums",
-  "created": "<today's date in YYYY-MM-DD>"
-}
-
-Update the `lastUpdated` timestamp to now. Write the file back.
-
-## Step 9: Report what was created
-
-Print a summary of what was done:
-
-Created 3 new tests in AlbumsApiTest.java:
-  + GET /albums returns all albums with status 200
-  + GET /albums/{id} returns a single album
-  + POST /albums creates a new album and returns 201
-
-Inventory updated. Compilation: OK.
-
-## Notes
-
-- Never delete or modify existing test methods.
-- If the user's description is ambiguous, generate the most common
-  happy-path test first, then ask if they want edge cases (404, 400, etc.).
-- Prefer adding to existing classes over creating new ones.
+```
+integration-tests/
+├── smoke/          # Quick health checks
+├── crud/           # Full CRUD operations
+├── validation/     # Error cases and edge cases
+└── inventory.json
 ```
 
-**Key design decisions:**
+This is deliberate. Smoke tests run in seconds — you use them for quick sanity checks. CRUD tests are more thorough — you run them after changes. Validation tests cover edge cases — you run them before releases.
 
-1. **Three-tier API discovery.** The skill doesn't assume how your API is documented. It tries OpenAPI spec first (best case — full schema available), then scans source code for annotations (good enough — at least you get paths), then asks the user (fallback — never dead-ends). This is the **graceful degradation** pattern.
-
-2. **Pattern matching from existing tests.** Step 3 tells the agent to read `PostsApiTest.java` before writing anything. This is critical. Instead of relying on the skill's instructions alone, the agent learns your actual coding style from real code. The result is tests that look like they were written by the same person.
-
-3. **Convention enforcement.** Step 5 spells out every naming and annotation rule. Method names follow `should_<result>_when<Condition>`. Display names start with the HTTP method and path. Tags match the resource. The agent can't deviate because the rules are explicit.
-
-4. **Compile check.** Step 7 catches syntax errors immediately. The agent doesn't just generate code and hope — it verifies that the code compiles before moving on. If it doesn't compile, it fixes the errors and retries.
-
-5. **Inventory update.** Step 8 keeps `test-inventory.json` in sync. Every new test gets registered. The list skill and the orchestrator both rely on this file being accurate.
-
-> The Copilot version follows the same logic. You'll find it in `.github/skills/rest-test-create/SKILL.md` in the companion code.
+The agent understands this organization. When you say "add a smoke test for GET /users," it writes the file to `smoke/get-users.hurl`. When you say "run the smoke tests," it runs `test_manager.py run-suite smoke`.
 
 ---
 
-### Skill 3: rest-test-run
+## Demo Walkthrough
 
-**What it does:** Runs REST Assured tests, reports structured results, diagnoses failures, and offers to fix them.
+Four demos that show the full skill lifecycle: create, run, fail, filter.
 
-**Why it exists:** Running `mvn test` is easy. Understanding *why* a test failed and *what to do about it* is the hard part. This skill turns a test runner into a diagnostic tool. It doesn't just say "1 test failed" — it shows you the expected vs actual values, hints at the likely cause, and offers to fix it automatically.
+### Demo 1: Create Tests
 
-**The full SKILL.md (Claude Code):**
-
-```markdown
----
-name: rest-test-run
-description: Run REST Assured tests and report results. Supports filtering
-  by tag, class, or method.
-argument-hint: Optional filter: tag name, class name, or ClassName#methodName
----
-
-# rest-test-run
-
-Run REST Assured tests and report a clear pass/fail summary. Supports
-targeted runs by tag, class, or method.
-
-## Step 1: Parse the argument and build the Maven command
-
-Examine the argument the user passed (if any) and pick the correct Maven
-command:
-
-| Argument pattern | Example | Maven command |
-|---|---|---|
-| No argument | _(empty)_ | `mvn test -f generated-tests/pom.xml` |
-| Lowercase word, no dots or `#` | `posts` | `mvn test -f generated-tests/pom.xml -Dgroups="posts"` |
-| Contains `Test` but no `#` | `PostsApiTest` | `mvn test -f generated-tests/pom.xml -Dtest=PostsApiTest` |
-| Contains `#` | `PostsApiTest#should_returnAllPosts_whenGetPosts` | `mvn test -f generated-tests/pom.xml -Dtest=PostsApiTest#should_returnAllPosts_whenGetPosts` |
-
-If the argument is ambiguous (e.g. a word that could be a tag or a class),
-prefer treating it as a tag first. If no tests run (zero tests found),
-retry as a class name.
-
-## Step 2: Run the tests
-
-Execute the Maven command. Capture all output.
-
-If Maven is not available or the command fails to start (not a test failure —
-an execution error), report the problem clearly and stop.
-
-## Step 3: Parse the Surefire output
-
-Extract the following from the Maven output:
-
-- Total tests run
-- Tests passed
-- Tests failed
-- Tests skipped (if any)
-- For each failure:
-  - Class name and method name
-  - The `@DisplayName` (shown in the test output as the test name)
-  - The failure reason: expected value vs actual value
-  - The request URL that was called (look for lines containing the base
-    URL or path)
-  - The full stack trace (collapsed — show only the first relevant line
-    by default)
-
-## Step 4: Report results
-
-Print a structured summary.
-
-**On success (all tests pass):**
-
-Run complete — all tests passed.
-
-Results:
-  Passed:  5
-  Failed:  0
-  Skipped: 0
-
-Tests:
-  [PASS] GET /posts returns all posts with status 200
-  [PASS] GET /posts/{id} returns a single post
-  [PASS] POST /posts creates a new post and returns 201
-  [PASS] PUT /posts/{id} updates an existing post
-  [PASS] DELETE /posts/{id} returns 200
-
-**On failure:**
-
-Run complete — 1 of 5 tests failed.
-
-Results:
-  Passed:  4
-  Failed:  1
-  Skipped: 0
-
-Failures:
-
-  [FAIL] PostsApiTest > should_returnAllPosts_whenGetPosts
-         Display name: GET /posts returns all posts with status 200
-         Request:      GET https://jsonplaceholder.typicode.com/posts
-         Expected:     body "size()" equalTo 100
-         Actual:       body "size()" was 0
-         Hint:         The response body is empty. The base URL in
-                       test-config.properties may be wrong, or the API
-                       may be returning a non-JSON response.
-
-## Step 5: Hint generation
-
-For each failure, provide a short diagnostic hint based on the type of error:
-
-| Failure pattern | Hint |
-|---|---|
-| Status code mismatch (expected 200, got 404) | "The endpoint path may be wrong, or the resource ID does not exist." |
-| Status code mismatch (expected 200, got 401/403) | "The API requires authentication. Check if an API key or token is needed." |
-| Status code mismatch (expected 201, got 200) | "The API may not follow REST conventions. Check the actual response status for POST." |
-| Body assertion failed (field value wrong) | "The response contained the field but with an unexpected value. Check if the API response schema changed." |
-| Body assertion failed (field missing) | "The expected field is missing from the response. The API schema may have changed." |
-| Connection refused / timeout | "The API is unreachable. Check the base URL in test-config.properties and your network connection." |
-| JSON parse error | "The response was not valid JSON. The server may have returned an error page or the Content-Type is wrong." |
-
-## Step 6: Offer a debug loop
-
-After reporting failures, ask the user what to do next:
-
-What would you like to do?
-  1. Fix the failing test(s) and re-run
-  2. Re-run only the failing tests (no fix)
-  3. Nothing — I'll investigate manually
-
-**If the user chooses option 1:**
-- Read the failing test method from the source file
-- Read the actual HTTP response that was returned (from the failure output)
-- Propose a specific fix: update the assertion, correct the path, adjust
-  the request body, etc.
-- Apply the fix to the test file
-- Re-run only the failing test(s) using `ClassName#methodName` targeting
-- Report the new result
-- If it still fails, repeat this loop up to **3 times total** per test.
-  After 3 attempts, stop and tell the user you were unable to fix it
-  automatically.
-
-**If the user chooses option 2:**
-- Build a targeted Maven command that runs only the failing tests
-- Re-run and report the new result without making any code changes
-
-**If the user chooses option 3:**
-- End the skill and summarize which tests need attention
-
-## Notes
-
-- This skill is designed to be run multiple times in the same session.
-  Each run is independent.
-- Never modify test files without explicit user confirmation (option 1
-  above).
-- If the full test suite is large, the Maven output can be long. Focus on
-  failures — do not reproduce the full output unless the user asks.
-- The Surefire reports XML files live at
-  `generated-tests/target/surefire-reports/*.xml` and contain structured
-  pass/fail data. You can read these for more reliable parsing if the
-  console output is truncated.
+**Prompt:**
+```
+/rest-api-testing Set up integration tests for https://jsonplaceholder.typicode.com. Create smoke tests for GET /posts and GET /users, plus CRUD tests for /posts.
 ```
 
-**Key design decisions:**
+**What happens:** The skill initializes the test directory, then generates five tests from templates:
 
-1. **Smart filter parsing.** The skill figures out whether `posts` is a tag or `PostsApiTest` is a class name. It even handles the ambiguous case — try as tag first, retry as class if nothing runs. The user doesn't need to know Maven syntax.
+```
+Initialized: integration-tests/
+Base URL: https://jsonplaceholder.typicode.com
+Created suites: smoke, crud, validation
+```
 
-2. **Structured failure reporting.** Each failure shows the display name, the request URL, expected vs actual, and a diagnostic hint. This is far more useful than Maven's raw output.
+The agent reads the GET template, customizes it for each smoke endpoint, then uses the POST, PUT, and DELETE templates for CRUD:
 
-3. **The debug loop.** This is the key innovation. The skill doesn't just report failures — it reads the failing test, analyzes the actual response, proposes a fix, applies it, and re-runs. It retries up to 3 times per test. This turns a test runner into a diagnostic tool that the agent uses iteratively. Most failures are simple assertion mismatches (wrong status code, unexpected field value). The debug loop catches these automatically.
+```
+Created 5 tests:
+  + smoke/get-posts.hurl   — GET /posts (returns 100 posts with correct structure)
+  + smoke/get-users.hurl   — GET /users (returns 10 users)
+  + crud/create-post.hurl  — POST /posts (creates a new post)
+  + crud/update-post.hurl  — PUT /posts/1 (updates an existing post)
+  + crud/delete-post.hurl  — DELETE /posts/1 (deletes a post)
 
-4. **User confirmation before changes.** The skill never modifies test code without asking first. Option 1 is explicit consent. This prevents the agent from silently "fixing" tests by weakening assertions.
+Inventory updated.
+```
 
-> The Copilot version follows the same logic. You'll find it in `.github/skills/rest-test-run/SKILL.md` in the companion code.
+The generated `get-posts.hurl` shows how the agent starts from the template and adds meaningful assertions:
+
+```hurl
+# Test: get-posts
+# Suite: smoke
+# Endpoint: GET /posts
+
+GET {{base_url}}/posts
+HTTP 200
+[Asserts]
+header "Content-Type" contains "application/json"
+jsonpath "$" count == 100
+jsonpath "$[0].id" == 1
+jsonpath "$[0].title" isString
+jsonpath "$[0].body" isString
+jsonpath "$[0].userId" isInteger
+```
+
+**What you learn:** The agent uses templates as a starting point, not a finished product. It keeps the consistent format (comment header, `{{base_url}}` variable, `[Asserts]` section) but adds assertions based on the API's response shape.
 
 ---
 
-## The Orchestrator Agent
+### Demo 2: Run All Tests
 
-The three skills are building blocks. Each does one focused thing well. The orchestrator agent combines them into a multi-step workflow driven by natural language.
+**Prompt:**
+```
+/rest-api-testing Run all tests
+```
 
-### Claude Code Approach
+**What happens:** The skill runs `test_manager.py run-all` and shows a summary table:
 
-Claude Code doesn't have a native agent file format with tool restrictions or isolated context. Instead, you create a **skill that acts as an orchestrator** — it parses the user's intent and routes to the right behavior.
+```
+Running 5 test(s)...
 
-**The full SKILL.md:**
+Test                                Status     HTTP       Time
+---------------------------------------------------------------------------
+get-posts                           PASS       HTTP/2 200 245ms
+get-users                           PASS       HTTP/2 200 189ms
+create-post                         PASS       HTTP/2 201 312ms
+update-post                         PASS       HTTP/2 200 287ms
+delete-post                         PASS       HTTP/2 200 195ms
+---------------------------------------------------------------------------
+Passed: 5/5  Failed: 0/5
+```
+
+**What you learn:** The CLI produces clean, structured output — the agent doesn't parse raw Hurl output. `test_manager.py` handles the formatting, timing, and status extraction.
+
+---
+
+### Demo 3: Handle a Failing Test
+
+**Prompt:**
+```
+/rest-api-testing Add a validation test: GET /posts/99999 should return 404. Then run it.
+```
+
+**What happens:** The agent creates a minimal test and runs it. The test fails:
+
+```
+Running 1 test...
+
+Result: FAILED
+
+Failure output:
+  error: Assert status code
+    --> integration-tests/validation/get-invalid-post.hurl:6:6
+     |
+   6 | HTTP 404
+     |      ^^^ actual value is 200
+     |
+```
+
+The skill shows the failure and asks: "Would you like me to analyze the failure and suggest a fix?"
+
+If you say yes, the agent reads the test, understands the mismatch (expected 404, got 200), and proposes updating the assertion:
+
+```hurl
+GET {{base_url}}/posts/99999
+HTTP 200
+[Asserts]
+jsonpath "$" isEmpty
+```
+
+**What you learn:** The failure analysis workflow is built into the skill's instructions. The agent doesn't just report "test failed" — it shows expected vs actual values and offers to fix it. This is the **debug loop** pattern. It also shows that tests document how the API *actually* behaves — JSONPlaceholder returns 200 with an empty body for invalid IDs, not 404.
+
+---
+
+### Demo 4: Run Tests by Suite
+
+**Prompt:**
+```
+/rest-api-testing Run just the smoke suite
+```
+
+**What happens:** The skill runs `test_manager.py run-suite smoke`:
+
+```
+Running 2 test(s)...
+
+Test                                Status     HTTP       Time
+---------------------------------------------------------------------------
+get-posts                           PASS       HTTP/2 200 231ms
+get-users                           PASS       HTTP/2 200 178ms
+---------------------------------------------------------------------------
+Passed: 2/2  Failed: 0/2
+```
+
+**What you learn:** Suite-based filtering lets you run a subset of tests. Smoke tests run in under a second — use them for quick sanity checks after changes. The agent translates "just the smoke suite" into `test_manager.py run-suite smoke`.
+
+---
+
+## Agents — The Theory
+
+We built one skill in this chapter. A natural next question: when do you need an *agent* instead?
+
+### When a Skill Isn't Enough
+
+A skill always does the same thing. You invoke it, it follows its instructions, it produces output. The `rest-api-testing` skill works because all its behaviors (init, create, run, list) share the same context — same files, same inventory, same templates.
+
+An agent is different. An agent **parses intent** and **routes to behavior**. It doesn't follow one set of steps — it decides which steps to follow based on what you asked for.
+
+You need an agent when:
+
+| Situation | Why a skill falls short |
+|-----------|------------------------|
+| Multiple skills need to be **composed** into a workflow | A skill can't invoke another skill |
+| The user's intent is **ambiguous** and needs interpretation | A skill assumes a known task |
+| Different inputs need **different behaviors** (not just different parameters) | A skill follows one path |
+| The workflow needs **multi-phase orchestration** (discover → plan → execute → verify) | A skill is a single phase |
+| You want a **dedicated persona** with its own context | A skill shares the session context |
+
+### Anatomy of an Agent
+
+An agent is structurally similar to a skill, but its instructions focus on **understanding intent** and **routing to behavior** rather than executing a fixed set of steps.
+
+Here's what an agent for our REST API testing scenario might look like:
 
 ```markdown
 ---
@@ -631,578 +895,70 @@ argument-hint: Describe what you need: list tests, create tests for an
 # rest-test-agent
 
 You are a REST API test management agent. You understand natural language
-and route requests to the right behavior. You can list tests, create tests,
-run tests, and orchestrate a full coverage workflow.
+and route requests to the right behavior.
 
 ## Step 1: Parse intent from the user's prompt
 
-Read the argument the user passed and identify their intent. Use this table:
+Read the argument the user passed and identify their intent:
 
 | Keywords in prompt | Intent |
 |---|---|
-| "list", "show", "inventory", "what tests", "what's covered", "existing tests" | **list** |
-| "create", "add", "generate", "write", "new test", "test for" | **create** |
-| "run", "execute", "test", "check", "verify", "does it work" | **run** |
-| "full coverage", "all resources", "complete", "cover everything", "all endpoints" | **full-coverage** |
+| "list", "show", "what tests", "existing" | **list** |
+| "create", "add", "generate", "new test" | **create** |
+| "run", "execute", "verify", "check" | **run** |
+| "full coverage", "all endpoints", "cover everything" | **full-coverage** |
 
-If the intent is unclear, ask the user: "Do you want to list, create, or
-run tests — or generate full coverage for all resources?"
+If the intent is unclear, ask the user.
 
 ## Step 2: Route to the right behavior
 
----
-
 ### Intent: list
-
-Follow the behavior defined in the `rest-test-list` skill exactly:
-
-1. Read `generated-tests/test-inventory.json`
-2. If missing or empty, rebuild from source files
-3. Present a grouped summary table with class names, test counts, tags,
-   and display names
-4. Print total count at the end
-
----
+Use the rest-api-testing skill to list existing tests...
 
 ### Intent: create
-
-Follow the behavior defined in the `rest-test-create` skill exactly,
-passing the user's prompt as the description:
-
-1. Discover the API (spec → controllers → ask user)
-2. Read existing tests to match patterns and check for duplicates
-3. Determine target class (add to existing or create new)
-4. Generate test methods following all naming and annotation conventions
-5. Verify compilation with `mvn test-compile -f generated-tests/pom.xml`
-6. Update `generated-tests/test-inventory.json`
-7. Report what was created
-
----
+Use the rest-api-testing skill to create new tests...
 
 ### Intent: run
-
-Follow the behavior defined in the `rest-test-run` skill exactly, passing
-any filter from the user's prompt:
-
-1. Parse the filter (tag / class / method / no filter)
-2. Run the appropriate Maven command
-3. Parse Surefire output and report pass/fail summary with hints
-4. Offer the debug loop (fix + re-run, re-run only, or stop)
-
----
+Use the rest-api-testing skill to run tests...
 
 ### Intent: full-coverage
-
-This is the full orchestration mode. Work through these phases in order.
-
-#### Phase 1: Discover what exists
-
-Follow the `rest-test-list` behavior to build a complete picture of
-currently covered endpoints. Print the list.
-
-#### Phase 2: Identify gaps
-
-Determine which API resources are not yet covered or only partially
-covered.
-
-To find what resources exist, check in this order:
-1. OpenAPI/Swagger spec (if present)
-2. Controller/route annotations in source code
-3. The JSONPlaceholder API — it exposes these resources:
-   `/posts`, `/comments`, `/albums`, `/photos`, `/todos`, `/users`
-
-Build a gap list:
-
-Coverage gaps identified:
-  [covered]   posts     — PostsApiTest (5 tests)
-  [covered]   comments  — CommentsApiTest (2 tests)
-  [covered]   users     — UsersApiTest (1 test)
-  [missing]   albums    — no tests found
-  [missing]   photos    — no tests found
-  [partial]   todos     — TodosApiTest (1 test, no write operations)
-
-Ask the user to confirm before proceeding: "I'll generate tests for albums,
-photos, and additional todos tests. Continue?"
-
-If the user says no or wants to skip specific resources, respect that.
-
-#### Phase 3: Create tests for each uncovered resource
-
-For each resource with missing or partial coverage, work through it one
-at a time:
-
-1. Determine standard CRUD endpoints for the resource
-2. Follow `rest-test-create` behavior to generate the test class or add
-   methods
-3. Run `mvn test-compile -f generated-tests/pom.xml` after each class to
-   catch errors early
-4. Fix compilation errors before moving to the next resource
-5. Print a progress line after each resource:
-   `[done] AlbumsApiTest — 5 tests created`
-
-Do not create all classes at once and compile at the end — compile
-incrementally.
-
-#### Phase 4: Run all tests
-
-Once tests are created and all compilation checks pass, run the full suite:
-
-mvn test -f generated-tests/pom.xml
-
-Parse the Surefire output and print a full summary.
-
-#### Phase 5: Fix failures
-
-For each failing test, attempt to fix it automatically:
-
-1. Read the failure details (expected vs actual, request URL)
-2. Read the failing test method
-3. Identify the most likely cause from the hint table in `rest-test-run`
-4. Apply a targeted fix to the test
-5. Re-run only that test
-6. If it passes, move to the next failure
-7. If it still fails, retry up to **3 times total** per test
-8. If still failing after 3 attempts, mark it as "needs manual review"
-
-#### Phase 6: Final report
-
-Print a complete final report:
-
-Full coverage run complete.
-
-Resources covered:
-  posts    — PostsApiTest    (5 tests)  [all pass]
-  comments — CommentsApiTest (2 tests)  [all pass]
-  users    — UsersApiTest    (3 tests)  [all pass]
-  albums   — AlbumsApiTest   (5 tests)  [all pass]  [new]
-  photos   — PhotosApiTest   (3 tests)  [1 failing — needs review]  [new]
-  todos    — TodosApiTest    (4 tests)  [all pass]  [expanded]
-
-Total: 22 tests | 21 passed | 1 needs manual review
-
-## Notes
-
-- In full-coverage mode, always confirm with the user before starting
-  the create phase.
-- Never delete existing tests during a full-coverage run.
-- If the user interrupts mid-run, the inventory and source files should
-  be left in a consistent state.
-- This skill can be run repeatedly. Each run picks up from the current
-  state of the inventory and source files.
+Chain all behaviors: list → identify gaps → create → run → fix...
 ```
 
-**What makes this an agent and not just a skill:**
+The key elements:
 
-1. **Intent parsing.** The skill doesn't expect a specific command — it understands natural language. "Show me what we have" routes to list. "Make sure everything is covered" routes to full-coverage.
+1. **Intent parsing.** The agent reads the user's natural language and maps it to a known intent. This is the core difference from a skill.
 
-2. **Routing logic.** Based on the parsed intent, the agent picks the right behavior. This is the core difference from a regular skill, which always does the same thing.
+2. **Routing logic.** Based on the parsed intent, the agent picks the right behavior. Different inputs lead to different paths.
 
-3. **Chaining.** In full-coverage mode, the agent chains list → identify gaps → create → run → fix. Each phase depends on the previous one. A single skill doesn't chain — an agent does.
+3. **Chaining.** In full-coverage mode, the agent chains multiple behaviors into a multi-step workflow: list what exists, identify gaps, create missing tests, run everything, fix failures.
 
-### Copilot Approach
+4. **Persona.** The opening line — "You are a REST API test management agent" — gives it a role. It's not just following steps; it's acting as a testing specialist.
 
-Copilot has a native agent format: the `.agent.md` file. It lives in `.github/agents/` and gives the agent its own persona, context, and tool restrictions.
+### Claude Code vs Copilot
 
-**The rest-test-agent.agent.md:**
-
-```markdown
----
-name: rest-test-agent
-description: Orchestrator agent for REST API test management. List, create,
-  run tests, or generate full coverage.
-tools:
-  - runCommand
-  - editFile
-  - createFile
-  - readFile
----
-
-You are a REST API test management agent. You help developers manage,
-generate, and run REST Assured tests for a Java/Maven project.
-
-## Project context
-
-- Tests live in `generated-tests/src/test/java/tests/`
-- Test inventory: `generated-tests/test-inventory.json`
-- Config: `generated-tests/src/test/resources/test-config.properties`
-- Target API: JSONPlaceholder (https://jsonplaceholder.typicode.com)
-- Build tool: Maven — always run from `generated-tests/` directory
-
-## Intent recognition
-
-When the user sends a message, identify their intent from this list:
-
-| Intent | Example phrases |
-|---|---|
-| **list** | "show tests", "what tests exist", "list all tests" |
-| **create** | "add a test for...", "generate tests for GET /users", "create a test that..." |
-| **run** | "run tests", "run the posts tests", "execute PostsApiTest" |
-| **full coverage** | "generate full coverage", "cover all endpoints", "test everything" |
-| **status** | "what's the status", "how many tests do we have" |
-
-If the intent is unclear, ask one short clarifying question. Do not guess.
-
-## Behavior by intent
-
-### list
-Follow the `rest-test-list` skill behavior...
-
-### create
-Follow the `rest-test-create` skill behavior...
-
-### run
-Follow the `rest-test-run` skill behavior...
-
-### full coverage
-Generate tests for all major endpoints, then run them all...
-
-## General rules
-
-- Always verify compilation after writing or modifying any Java file.
-- Never remove or modify existing test logic without explicit user approval.
-- Update `generated-tests/test-inventory.json` whenever tests are added.
-- Keep responses concise — show summaries and key details, not full file dumps.
-```
-
-*(The full file is in the companion code at `.github/agents/rest-test-agent.agent.md`.)*
-
-### Side-by-Side Comparison
+The two platforms implement agents differently:
 
 | Feature | Claude Code | Copilot |
 |---------|------------|---------|
-| File | `.claude/skills/rest-test-agent/SKILL.md` | `.github/agents/rest-test-agent.agent.md` |
-| Invocation | `/rest-test-agent <prompt>` | `@rest-test-agent <prompt>` |
-| Tool restrictions | Not supported | `tools:` frontmatter limits to `runCommand`, `editFile`, `createFile`, `readFile` |
-| Own context | Shares your session context | Yes, native — gets an isolated context |
-| Skill reuse | Inlines the behavior from each skill | References skill behaviors in its body |
+| Agent file | `.claude/skills/<name>/SKILL.md` (a skill that acts as an orchestrator) | `.github/agents/<name>.agent.md` (dedicated format) |
+| Invocation | `/agent-name <prompt>` | `@agent-name <prompt>` |
+| Tool restrictions | Not natively supported | `tools:` field in frontmatter |
+| Own context | Shares your session context | Yes, gets isolated context |
 
-The Copilot version has one advantage: the `tools:` field. By restricting the agent to only `runCommand`, `editFile`, `createFile`, and `readFile`, you prevent it from doing things like creating pull requests or running arbitrary shell commands. Claude Code doesn't have this restriction mechanism — you rely on the instructions themselves to set boundaries.
+In Claude Code, an "agent" is really a skill that contains intent-parsing and routing logic. It doesn't get a separate context — it operates within your current session. This means it can see files you've already read and conversation history you've built up.
 
-The Claude Code version has a different advantage: it shares your session context. The agent can see files you've already read, conversation history, and any state you've built up. The Copilot agent starts fresh each time.
+In Copilot, an `.agent.md` file gets its own isolated context and can restrict which tools it has access to. The `tools:` field in the frontmatter explicitly lists what the agent can do (e.g., `runCommand`, `editFile`, `readFile`). This prevents the agent from doing things you didn't intend.
 
----
+### When to Build an Agent
 
-## Demo Walkthrough
+For most teams starting with AI coding, **start with skills.** Build a few focused skills that handle your most common workflows. Only promote to an agent when you find yourself saying:
 
-Let's run through 10 demos against JSONPlaceholder. Each demo builds on the previous one. The prompts work in both Claude Code and Copilot — just adjust the invocation style (`/skill-name` for Claude Code, `/skill-name` or `@agent-name` for Copilot).
+- "I keep having to invoke three skills in sequence to do one thing"
+- "I wish the agent would figure out which skill to use based on my question"
+- "I need a dedicated testing/deployment/review persona"
 
-### Demo 1: List Existing Tests
-
-**Prompt:**
-```
-/rest-test-list
-```
-
-**What happens:** The skill reads `test-inventory.json` and presents the grouped summary.
-
-```
-CommentsApiTest (2 tests)  [tag: comments]
-  - GET /posts/{id}/comments returns comments for a post
-  - GET /comments?postId={id} returns filtered comments
-
-PostsApiTest (5 tests)  [tag: posts]
-  - GET /posts returns all posts with status 200
-  - GET /posts/{id} returns a single post
-  - POST /posts creates a new post and returns 201
-  - PUT /posts/{id} updates an existing post
-  - DELETE /posts/{id} returns 200
-
-UsersApiTest (1 test)  [tag: users]
-  - GET /users returns all users with status 200
-
-Total: 8 tests across 3 test classes.
-```
-
-**What you learn:** The inventory gives you an instant view of coverage. No need to scan Java files manually. Note that `TodosApiTest` doesn't appear — it has no `@Test` methods, just an empty shell.
-
----
-
-### Demo 2: Create Tests for an Already-Covered Resource
-
-**Prompt:**
-```
-/rest-test-create Create tests for the /posts resource — GET all, GET by ID, POST, PUT, DELETE
-```
-
-**What happens:** The skill reads the inventory, sees that `PostsApiTest` already has 5 tests covering all standard CRUD operations, and reports back:
-
-```
-All standard CRUD operations for /posts are already covered:
-  - GET /posts returns all posts with status 200
-  - GET /posts/{id} returns a single post
-  - POST /posts creates a new post and returns 201
-  - PUT /posts/{id} updates an existing post
-  - DELETE /posts/{id} returns 200
-
-No new tests needed. Would you like to add edge case tests
-(e.g., 404 for missing post, validation errors)?
-```
-
-**What you learn:** The duplicate check prevents redundant tests. The skill doesn't blindly generate — it checks first.
-
----
-
-### Demo 3: Verify Nothing Changed
-
-**Prompt:**
-```
-/rest-test-list
-```
-
-**What happens:** Same output as Demo 1. Still 8 tests across 3 classes. Nothing was added because Demo 2 found duplicates.
-
-**What you learn:** Skills are predictable. Running list before and after create confirms what changed (or didn't).
-
----
-
-### Demo 4: Run All Tests
-
-**Prompt:**
-```
-/rest-test-run
-```
-
-**What happens:** The skill runs `mvn test -f generated-tests/pom.xml`, parses the Surefire output, and reports:
-
-```
-Run complete — all tests passed.
-
-Results:
-  Passed:  8
-  Failed:  0
-  Skipped: 0
-
-Tests:
-  [PASS] GET /posts returns all posts with status 200
-  [PASS] GET /posts/{id} returns a single post
-  [PASS] POST /posts creates a new post and returns 201
-  [PASS] PUT /posts/{id} updates an existing post
-  [PASS] DELETE /posts/{id} returns 200
-  [PASS] GET /posts/{id}/comments returns comments for a post
-  [PASS] GET /comments?postId={id} returns filtered comments
-  [PASS] GET /users returns all users with status 200
-```
-
-**What you learn:** Clean baseline. All 8 pre-built tests pass against JSONPlaceholder.
-
----
-
-### Demo 5: Run a Single Test
-
-**Prompt:**
-```
-/rest-test-run PostsApiTest#should_return200_whenDeletePost
-```
-
-**What happens:** The skill builds a targeted Maven command and runs only the specified test:
-
-```
-Run complete — all tests passed.
-
-Results:
-  Passed:  1
-  Failed:  0
-  Skipped: 0
-
-Tests:
-  [PASS] DELETE /posts/{id} returns 200
-```
-
-**What you learn:** You can target a single test by `ClassName#methodName`. Useful for quick validation after a change — no need to run the full suite every time.
-
----
-
-### Demo 6: Create Tests for a Partially-Covered Resource
-
-**Prompt:**
-```
-/rest-test-create Add tests for /comments. Check the API to figure out the fields and supported operations.
-```
-
-**What happens:** The agent discovers the API (no OpenAPI spec, no controllers, so it checks JSONPlaceholder directly). It reads `CommentsApiTest` and sees 2 existing tests (both GET). It identifies missing operations and generates new tests:
-
-```
-CommentsApiTest already has 2 tests:
-  - GET /posts/{id}/comments returns comments for a post
-  - GET /comments?postId={id} returns filtered comments
-
-Adding tests for missing operations:
-
-Created 3 new tests in CommentsApiTest.java:
-  + POST /comments creates a new comment and returns 201
-  + PUT /comments/{id} updates an existing comment
-  + DELETE /comments/{id} returns 200
-
-Inventory updated. Compilation: OK.
-```
-
-**What you learn:** The skill adds to existing classes rather than creating new ones. It checks what's already there and only fills the gaps.
-
----
-
-### Demo 7: Create a Negative Test
-
-**Prompt:**
-```
-/rest-test-create Add a negative test: GET /posts with an invalid ID should be handled gracefully.
-```
-
-**What happens:** The agent generates a test expecting `404 Not Found` for `GET /posts/99999`. But JSONPlaceholder doesn't return 404 for invalid IDs — it returns `200` with an empty body `{}`.
-
-```
-Created 1 new test in PostsApiTest.java:
-  + GET /posts/{invalid-id} returns 404 for non-existent post
-
-Inventory updated. Compilation: OK.
-
-Note: JSONPlaceholder may not return 404 for invalid IDs — some
-APIs return 200 with an empty body instead. Run this test to verify
-the actual behavior.
-```
-
-**What you learn:** This is a teaching moment. Not all APIs follow REST conventions. JSONPlaceholder returns 200 with `{}` for invalid IDs. When you run this test, it will fail — and the debug loop in `rest-test-run` will help you fix the assertion to match the actual API behavior. The test is still valuable: it documents how the API *actually* behaves, not how you assumed it behaves.
-
----
-
-### Demo 8: Create Relationship Tests
-
-**Prompt:**
-```
-/rest-test-create Create tests for the relationship between posts and comments — verify that /posts/{id}/comments and /comments?postId={id} return the same data.
-```
-
-**What happens:** The agent creates a test that calls both endpoints and verifies they return the same comments:
-
-```
-Created 1 new test in CommentsApiTest.java:
-  + GET /posts/{id}/comments and GET /comments?postId={id} return
-    consistent results
-
-Inventory updated. Compilation: OK.
-```
-
-**What you learn:** Skills handle complex scenarios, not just simple CRUD. The agent understands "relationship between posts and comments" and generates a cross-endpoint consistency test.
-
----
-
-### Demo 9: Run Tests by Tag
-
-**Prompt:**
-```
-/rest-test-run comments
-```
-
-**What happens:** The skill recognizes `comments` as a tag (lowercase, no dots, no `#`). It runs `mvn test -f generated-tests/pom.xml -Dgroups="comments"`, which executes only tests tagged with `@Tag("comments")`:
-
-```
-Run complete — all tests passed.
-
-Results:
-  Passed:  6
-  Failed:  0
-  Skipped: 0
-
-Tests:
-  [PASS] GET /posts/{id}/comments returns comments for a post
-  [PASS] GET /comments?postId={id} returns filtered comments
-  [PASS] POST /comments creates a new comment and returns 201
-  [PASS] PUT /comments/{id} updates an existing comment
-  [PASS] DELETE /comments/{id} returns 200
-  [PASS] GET /posts/{id}/comments and GET /comments?postId={id}
-         return consistent results
-```
-
-**What you learn:** Tag-based filtering lets you run tests for a single resource. The 2 original tests plus the 4 new ones all pass.
-
----
-
-### Demo 10: Full Orchestrator — Complete Coverage
-
-This demo uses the orchestrator agent.
-
-**Claude Code:**
-```
-/rest-test-agent I need full test coverage for the JSONPlaceholder API.
-```
-
-**Copilot:**
-```
-@rest-test-agent I need full test coverage for the JSONPlaceholder API.
-```
-
-**What happens:** The agent runs through all six phases.
-
-**Phase 1 — Discover what exists:**
-```
-Current coverage:
-  CommentsApiTest (6 tests)  [tag: comments]
-  PostsApiTest (6 tests)  [tag: posts]
-  UsersApiTest (1 test)  [tag: users]
-
-Total: 13 tests across 3 test classes.
-```
-
-**Phase 2 — Identify gaps:**
-```
-Coverage gaps identified:
-  [covered]   posts     — PostsApiTest (6 tests)
-  [covered]   comments  — CommentsApiTest (6 tests)
-  [covered]   users     — UsersApiTest (1 test)
-  [missing]   albums    — no tests found
-  [missing]   photos    — no tests found
-  [partial]   todos     — TodosApiTest exists but has no test methods
-
-I'll generate tests for albums, photos, todos, and expand users.
-Continue?
-```
-
-You confirm. The agent proceeds.
-
-**Phase 3 — Create tests:**
-```
-[done] AlbumsApiTest  — 5 tests created (GET all, GET by ID, POST, PUT, DELETE)
-[done] PhotosApiTest  — 5 tests created (GET all, GET by ID, POST, PUT, DELETE)
-[done] TodosApiTest   — 5 tests created (GET all, GET by ID, POST, PUT, DELETE)
-[done] UsersApiTest   — 4 tests added (GET by ID, POST, PUT, DELETE)
-```
-
-**Phase 4 — Run all tests:**
-```
-Run complete — 27 of 28 tests passed.
-
-Failures:
-  [FAIL] PhotosApiTest > should_returnPhotoById_whenGetPhotoById
-         Expected: body "thumbnailUrl" startsWith "https://"
-         Actual:   body "thumbnailUrl" was "https://via.placeholder.com/150/92c952"
-         Hint: The assertion is too strict. The URL format is valid
-               but doesn't match the expected pattern exactly.
-```
-
-**Phase 5 — Fix failures:**
-```
-Fixing PhotosApiTest#should_returnPhotoById_whenGetPhotoById...
-  Changed assertion from startsWith("https://") to notNullValue()
-  Re-running... PASS
-
-All failures resolved.
-```
-
-**Phase 6 — Final report:**
-```
-Full coverage run complete.
-
-Resources covered:
-  albums   — AlbumsApiTest   (5 tests)  [all pass]  [new]
-  comments — CommentsApiTest (6 tests)  [all pass]
-  photos   — PhotosApiTest   (5 tests)  [all pass]  [new, 1 fixed]
-  posts    — PostsApiTest    (6 tests)  [all pass]
-  todos    — TodosApiTest    (5 tests)  [all pass]  [new]
-  users    — UsersApiTest    (5 tests)  [all pass]  [expanded]
-
-Total: 32 tests | 32 passed | 0 needs manual review
-```
-
-**What you learn:** The orchestrator chains all three skills into a single workflow. It discovers, creates, runs, and fixes — all from one natural language prompt. This is the power of Level 2: you describe the *what*, the agent handles the *how*.
+The `rest-api-testing` skill we built in this chapter covers most testing workflows without an agent. You'd only need an agent if you wanted to chain testing with other concerns — say, an agent that reads a PR diff, identifies changed endpoints, generates tests for those endpoints, runs them, and posts the results as a PR comment. That's multi-step orchestration across different domains. That's when an agent earns its complexity.
 
 ---
 
@@ -1212,9 +968,9 @@ The complete working code is in the `code/` folder alongside this chapter.
 
 ### Prerequisites
 
-- **Java 17+** — [adoptium.net](https://adoptium.net/) or your preferred distribution
-- **Maven 3.8+** — [maven.apache.org](https://maven.apache.org/download.cgi)
-- **Claude Code** or **GitHub Copilot** CLI installed (see Chapter 6 for setup)
+- **Python 3.8+** — [python.org](https://www.python.org/downloads/)
+- **Hurl 6.0+** — [hurl.dev](https://hurl.dev/docs/installation.html)
+- **Claude Code** installed (see Chapter 6 for setup)
 
 ### Setup
 
@@ -1225,86 +981,90 @@ The complete working code is in the `code/` folder alongside this chapter.
    cd technical/07_skills-and-agents/code/
    ```
 
-3. Verify the tests run:
+3. Verify prerequisites:
    ```bash
-   cd generated-tests && mvn test
+   python --version    # 3.8+
+   hurl --version      # 6.0+
    ```
-   You should see 8 tests pass.
 
-4. **For Claude Code:** Copy the `.claude/` folder to your project root:
+4. Run the existing tests:
    ```bash
-   cp -r .claude/ /path/to/your/project/
+   python rest-api-testing/code/test_manager.py run-all
+   ```
+   You should see 6 tests run (some may fail if JSONPlaceholder behaves differently than expected — that's fine, it's a learning opportunity).
+
+5. **To use as a skill:** Copy the `rest-api-testing/` folder to your project's `.claude/skills/`:
+   ```bash
+   mkdir -p /path/to/your/project/.claude/skills/
+   cp -r rest-api-testing/ /path/to/your/project/.claude/skills/rest-api-testing/
    ```
    Then start a Claude Code session in your project: `claude`
 
-5. **For Copilot:** Copy the `.github/` folder to your project root:
-   ```bash
-   cp -r .github/ /path/to/your/project/
-   ```
+6. Run through the demos from the previous section. Start with listing tests and work your way up to creating and running your own.
 
-6. Run through the demos from the previous section. Start with `/rest-test-list` and work your way up to the full orchestrator.
-
-> **Tip:** You don't have to use JSONPlaceholder. Point `test-config.properties` at any REST API and the skills will adapt. The test conventions and patterns stay the same — only the base URL and resource names change.
+> **Tip:** You don't have to use JSONPlaceholder. Run `test_manager.py init https://your-api.com` and the skill will adapt. The test conventions and templates stay the same — only the base URL and resource names change.
 
 ---
 
 ## Lessons Learned and Patterns
 
+### Pattern: The Inventory File
+
+`inventory.json` tracks every generated test in a structured JSON file. This gives you:
+
+- **Fast reads.** List tests by reading one file instead of scanning `.hurl` files.
+- **Consistent format.** The CLI and the skill both read and write the same structure.
+- **Cross-session persistence.** The inventory survives between sessions. A new session picks up exactly where the last one left off.
+- **Duplicate detection.** Check the inventory before generating, preventing redundant tests.
+
+Use this pattern whenever your skills generate artifacts. A JSON inventory is cheaper to read than scanning source files every time.
+
+### Pattern: The Debug Loop
+
+The skill's failure handling workflow — show the error, offer to analyze, suggest a fix — is the **debug loop** pattern. The agent iterates until green or escalates to the user.
+
+Most test failures are simple: wrong status code, unexpected field value, assertion too strict. The debug loop catches these automatically. The hard failures — logic errors, API behavior changes, missing authentication — get flagged for manual review.
+
+The debug loop is useful beyond testing. Any skill that runs code and checks results can benefit from an analyze-fix-retry cycle: linters, build scripts, deployment health checks.
+
+### Pattern: Templates as Conventions
+
+The Hurl templates enforce a consistent format across all generated tests:
+
+- Same comment header (test name, suite, endpoint)
+- Same assertion style (`[Asserts]` section with typed checks)
+- Same variable usage (`{{base_url}}` injected at runtime)
+
+The result: every test file looks like it was written by the same person, regardless of who prompted it or when. This is how you scale consistency across a team. Instead of code review comments like "add the comment header" or "use the base_url variable," the templates enforce it automatically.
+
+### Pattern: CLI Wrapping
+
+`test_manager.py` wraps Hurl with inventory management and structured output. The skill tells the agent to use the CLI, not raw Hurl commands. This gives you:
+
+- **Abstraction.** The agent doesn't need to know Hurl's full flag syntax.
+- **Structured output.** The CLI formats results for easy parsing — summary tables for multiple tests, detailed output for single tests.
+- **Inventory integration.** Run by name, not by file path. The CLI resolves names to files via the inventory.
+
+Give your skills CLI tools, not raw commands. The CLI encapsulates complexity and gives the agent a clean interface.
+
 ### When to Use a Skill vs an Agent
 
 | Use a skill when... | Use an agent when... |
 |---------------------|---------------------|
-| One focused task | Multi-step workflow |
+| One focused task (even with multiple sub-actions) | Multi-step workflow across different domains |
 | Clear input, clear output | Natural language routing needed |
-| No chaining needed | Composes multiple skills |
-| Quick to invoke | Needs its own context or persona |
+| All behaviors share the same context | Composes skills with different contexts |
+| Quick to invoke | Needs its own persona |
 | Steps are always the same | Steps depend on user intent |
 
-Most of the time, start with a skill. Only promote to an agent when you need intent parsing, chaining, or a dedicated persona. Three focused skills plus one orchestrator agent is a common and effective pattern.
-
-### Pattern: The Inventory File
-
-`test-inventory.json` tracks every generated test in a structured JSON file. This gives you:
-
-- **Fast reads.** The list skill reads one JSON file instead of parsing multiple Java files.
-- **Consistent format.** Every skill reads and writes the same structure.
-- **Cross-session persistence.** The inventory survives between sessions. A new session picks up exactly where the last one left off.
-- **Duplicate detection.** The create skill checks the inventory before generating, preventing redundant tests.
-
-Use this pattern whenever your skills generate artifacts. A JSON inventory is cheaper to read than scanning source code every time.
-
-### Pattern: The Debug Loop
-
-The run skill doesn't just report failures — it analyzes them, suggests fixes, and offers to apply them. The agent iterates until green or gives up after 3 attempts.
-
-This turns a test runner into a diagnostic tool. Most test failures are simple: wrong status code, unexpected field value, assertion too strict. The debug loop catches these automatically. The hard failures — logic errors, API behavior changes, missing authentication — get flagged for manual review.
-
-The debug loop is useful beyond testing. Any skill that runs code and checks results can benefit from an analyze-fix-retry cycle: linters, build scripts, deployment health checks.
-
-### Pattern: Convention Enforcement
-
-The create skill spells out every convention: method naming (`should_<result>_when<Condition>`), annotations (`@Test`, `@DisplayName`, `@Tag`), REST Assured structure (`given/when/then`), and configuration (base URL from properties file).
-
-The result: every test method follows the same format, regardless of who prompted it or when. This is how you scale consistency across a team. Instead of code review comments like "use our naming convention," the skill enforces it automatically.
-
-Apply this pattern to any code generation skill: define the conventions explicitly, reference existing code as a template, and verify the output compiles.
-
-### Pattern: Graceful Degradation
-
-The create skill discovers APIs through a 3-tier fallback:
-
-1. **OpenAPI spec** — best case, full schema available
-2. **Source code annotations** — good enough, paths and methods
-3. **Ask the user** — always works, never dead-ends
-
-The skill never stops and says "I can't find the API spec." It always has a path forward. Design your skills the same way: try the best source first, fall back to alternatives, and ask the user as a last resort.
+Most of the time, start with a skill. A well-designed skill with a good Quick Reference table handles more than you'd expect. Only promote to an agent when you're composing across domains.
 
 ### Testing Your Skills
 
 After building a skill, validate it:
 
 1. **Run through the demo prompts.** Every prompt from the walkthrough should produce the expected output.
-2. **Test edge cases.** Empty inventory. Compile errors. API unreachable. Invalid user input.
+2. **Test edge cases.** Empty inventory. Missing prerequisites. API unreachable. Invalid user input.
 3. **Have a teammate try it cold.** If they can't follow the output or get confused by a step, simplify.
 4. **Check after every change.** Skills are code. A small edit can break the flow. Run the demos after any modification.
 
@@ -1312,9 +1072,9 @@ After building a skill, validate it:
 
 ## What's Next
 
-You've built skills and agents. You know how to encode your team's patterns into reusable instructions. You know how to compose skills into orchestrators that handle multi-step workflows from a single prompt. And you know the patterns that make skills reliable: inventory files, debug loops, convention enforcement, graceful degradation.
+You've reached L3 — team-level shared practices with reusable skills. You've built a skill that encodes your team's testing patterns into a reusable, shareable instruction set. You understand when to use a skill vs an agent, and you know the patterns that make skills reliable: inventory files, debug loops, templates as conventions, CLI wrapping.
 
-But skills and agents are just the building blocks. The real power comes from applying them across the full software lifecycle — not just testing.
+But skills and agents are just the building blocks. The real power comes from applying them across the full software lifecycle — not just testing. The next big shift is **L3 → L4** — moving from being an AI tool user to being a reviewer of AI-driven processes. That's where structured workflows, spec-driven development, and multi-agent orchestration come in.
 
 Coming up:
 
@@ -1326,13 +1086,11 @@ Coming up:
 
 ## Resources
 
-- [Claude Code Custom Slash Commands](https://code.claude.com/docs/en/skills) — Official documentation for creating and using skills in Claude Code
-- [Claude Code Skills](https://code.claude.com/docs/en/custom-slash-commands) — Guide to custom slash commands and skill files
+- [Claude Code Custom Slash Commands](https://docs.anthropic.com/en/docs/claude-code/skills) — Official documentation for creating and using skills in Claude Code
 - [Copilot Skills (SKILL.md)](https://docs.github.com/en/copilot/customizing-copilot/extending-copilot-chat-with-skills) — GitHub's guide to creating Copilot skills
 - [Copilot Agent Mode and .agent.md](https://docs.github.com/en/copilot/using-github-copilot/using-copilot-coding-agent) — Documentation on Copilot's agent file format
-- [REST Assured Documentation](https://rest-assured.io/) — Official docs for the REST Assured testing library
+- [Hurl — Run and Test HTTP Requests](https://hurl.dev) — Official Hurl documentation and installation guide
 - [JSONPlaceholder](https://jsonplaceholder.typicode.com) — The free fake REST API used in all demos
-- [JUnit 5 User Guide](https://junit.org/junit5/docs/current/user-guide/) — Comprehensive guide to JUnit 5 annotations, tags, and test lifecycle
 - [Chapter 3: Coding with AI Agents](../03_coding-with-agents/03_coding-with-agents.md) — Theory behind skills and agent extensibility
 - [Chapter 4: The Big Picture](../04_the-big-picture/04_the-big-picture.md) — How agents process instructions and manage context
-- [Chapter 6: From Level 0 to Level 1](../06_hands-on-with-agents/06_hands-on-with-agents.md) — The plan-build-validate workflow this chapter builds on
+- [Chapter 6: From L0 to L2](../06_hands-on-with-agents/06_hands-on-with-agents.md) — The plan-build-validate workflow this chapter builds on
