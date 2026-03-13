@@ -962,6 +962,45 @@ The `rest-api-testing` skill we built in this chapter covers most testing workfl
 
 ---
 
+## Creating Skills and Agents — The Practical How
+
+You know what skills and agents are. Now — how do you actually create one?
+
+### Creating Agents
+
+Both platforms have built-in commands that scaffold agents for you:
+
+| Platform | Command | What it does |
+|----------|---------|-------------|
+| Claude Code | `/agents` | Lists all agents, lets you select **Create new agent**, choose scope (user/project), and **Generate with Claude** — describe what your agent should do and Claude writes the system prompt |
+| Copilot | `/agents` | Same interactive flow — create, configure, and save `.agent.md` files |
+
+This is the fastest path. Claude generates the frontmatter, intent parsing, and routing logic from your description. Review, edit, done.
+
+### Creating Skills
+
+Both platforms have dedicated skills that help you author new skills:
+
+| Platform | Skill | What it does |
+|----------|-------|-------------|
+| Claude Code | `/writing-skills` ([Superpowers plugin](https://github.com/anthropics/claude-code-plugins)) | Walks you through the full authoring process — frontmatter, trigger conditions, SKILL.md content, and testing that agents actually follow the instructions |
+| Copilot | `make-skill-template` ([awesome-copilot](https://github.com/github/awesome-copilot)) | Scaffolds a new skill folder with SKILL.md template and supporting file structure |
+
+You can also just create the files manually — `mkdir -p .claude/skills/my-skill/` (or `.github/skills/` for Copilot), write `SKILL.md`, done. The `/` commands help when you want guidance on structure and best practices.
+
+### Official Repositories and Templates
+
+Browse these before writing from scratch — someone may have already built what you need:
+
+| Repository | What it offers |
+|-----------|---------------|
+| [anthropics/skills](https://github.com/anthropics/skills) | Official Anthropic example skills — creative, technical, and enterprise workflows |
+| [github/awesome-copilot](https://github.com/github/awesome-copilot) | GitHub's community collection of skills, agents, and configurations |
+| [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) | Curated skills, hooks, slash commands, and plugins for Claude Code |
+| [awesome-claude-skills](https://github.com/travisvn/awesome-claude-skills) | Curated Claude skills, resources, and community tools |
+
+---
+
 ## Try It Yourself
 
 The complete working code is in the `code/` folder alongside this chapter.
@@ -1007,6 +1046,32 @@ The complete working code is in the `code/` folder alongside this chapter.
 ---
 
 ## Lessons Learned and Patterns
+
+### The Skill Creation Workflow
+
+Building a skill is a development task — treat it like one. Follow the same plan-build-validate workflow from Chapter 6:
+
+1. **Plan first if it's complex.** A quick utility skill? Just write it. A multi-step workflow with templates, CLI tooling, and inventory management? Enter plan mode. Describe what the skill should do, what files it needs, how the agent should interact with it. Review the plan before touching any files.
+
+2. **Use the `/` commands.** Don't manually create agent boilerplate — run `/agents` and let Claude generate the system prompt. For skills, start from a template in [anthropics/skills](https://github.com/anthropics/skills) when one fits. The tooling exists to save you time. Use it.
+
+3. **Validate by running.** After creating a skill, invoke it. Run through the core use cases. Have someone else try it cold. A skill that only works for its author isn't reusable — it's a personal note.
+
+### Quick Anatomy Reference
+
+Every skill follows the same structure. Keep this as a checklist:
+
+| Part | Required? | Purpose |
+|------|-----------|---------|
+| **Frontmatter** (`name`, `description`, `argument-hint`) | Yes | Discovery — the agent reads this at session start to know when to suggest the skill |
+| **Overview section** | Yes | What the skill does in 1-2 sentences |
+| **Quick Reference table** | Recommended | Scannable lookup for common commands or behaviors |
+| **Step-by-step instructions** | Yes | What the agent follows on invocation — imperative, specific, no ambiguity |
+| **`code/` folder** | When complexity > ~10 steps | Move parsing, formatting, and orchestration into scripts |
+| **`templates/` folder** | When generating files | Teach by example — show the format, don't describe it |
+| **`USAGE.md`** | When humans need setup docs | Keep human docs out of SKILL.md — every token in SKILL.md costs context |
+
+**The golden rule:** SKILL.md should be under ~500 tokens of instruction. Everything else lives in the folder.
 
 ### Pattern: The Inventory File
 
@@ -1087,8 +1152,14 @@ Coming up:
 ## Resources
 
 - [Claude Code Custom Slash Commands](https://docs.anthropic.com/en/docs/claude-code/skills) — Official documentation for creating and using skills in Claude Code
+- [Claude Code Custom Subagents](https://code.claude.com/docs/en/sub-agents) — Official documentation for creating agents with the `/agents` command
+- [anthropics/skills](https://github.com/anthropics/skills) — Official Anthropic repository with example skills across creative, technical, and enterprise workflows
 - [Copilot Skills (SKILL.md)](https://docs.github.com/en/copilot/customizing-copilot/extending-copilot-chat-with-skills) — GitHub's guide to creating Copilot skills
 - [Copilot Agent Mode and .agent.md](https://docs.github.com/en/copilot/using-github-copilot/using-copilot-coding-agent) — Documentation on Copilot's agent file format
+- [Creating Agent Skills for Copilot](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/create-skills) — GitHub's guide for Copilot coding agent skills
+- [github/awesome-copilot](https://github.com/github/awesome-copilot) — GitHub's community collection of skills, agents, and configurations
+- [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) — Curated list of skills, hooks, slash commands, and plugins for Claude Code
+- [Superpowers Plugin](https://github.com/anthropics/claude-code-plugins) — Agentic skills framework with TDD-based skill authoring methodology
 - [Hurl — Run and Test HTTP Requests](https://hurl.dev) — Official Hurl documentation and installation guide
 - [JSONPlaceholder](https://jsonplaceholder.typicode.com) — The free fake REST API used in all demos
 - [Chapter 3: Coding with AI Agents](../03_coding-with-agents/03_coding-with-agents.md) — Theory behind skills and agent extensibility
