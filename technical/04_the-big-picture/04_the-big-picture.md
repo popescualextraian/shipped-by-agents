@@ -19,12 +19,12 @@ flowchart TD
     end
 
     subgraph CONTEXT["CONTEXT"]
-        C1["Project instructions\n(CLAUDE.md)"]
-        C2["Memory files\n(MEMORY.md)"]
-        C3["Conversation\nhistory"]
-        C4["System\nprompt"]
-        C5["Rules &\nskill defs"]
-        C6["File contents,\ntool outputs"]
+        C1["Project instructions<br/>(CLAUDE.md)"]
+        C2["Memory files<br/>(MEMORY.md)"]
+        C3["Conversation<br/>history"]
+        C4["System<br/>prompt"]
+        C5["Rules &<br/>skill defs"]
+        C6["File contents,<br/>tool outputs"]
     end
 
     subgraph AGENT["THE AGENT (ReAct Loop)"]
@@ -32,9 +32,9 @@ flowchart TD
     end
 
     subgraph CAPABILITIES["CAPABILITIES"]
-        T1["Built-in Tools\nRead, Write, Edit,\nBash, Grep, Glob"]
-        T2["MCP Servers\nGitHub, Sentry, Slack,\ndatabases, custom APIs"]
-        T3["Extensions\nSkills, subagents, hooks, custom commands"]
+        T1["Built-in Tools<br/>Read, Write, Edit,<br/>Bash, Grep, Glob"]
+        T2["MCP Servers<br/>GitHub, Sentry, Slack,<br/>databases, custom APIs"]
+        T3["Extensions<br/>Skills, subagents, hooks, custom commands"]
     end
 
     YOU --> CONTEXT --> AGENT -- uses --> CAPABILITIES
@@ -97,20 +97,20 @@ Everything the agent knows comes from **context** — the information loaded int
 ```mermaid
 flowchart TD
     subgraph CW["CONTEXT WINDOW"]
-        direction TB
-        subgraph AUTO["AUTOMATIC (you don't control)"]
-            A1["System prompt — Core instructions from the tool vendor. Read-only."]
-            A2["Tool definitions — Descriptions of available tools. Grows with MCP."]
-            A3["Compaction summaries — Older messages get summarized automatically."]
+        direction LR
+        subgraph YOU["YOU CONTROL"]
+            B1["Project instructions<br/>(CLAUDE.md, AGENTS.md)"]
+            B2["Memory files<br/>(MEMORY.md)"]
+            B3["Rules<br/>(.claude/rules/*.md)"]
+            B4["Your prompts"]
+            B5["Conversation history"]
+            B6["File contents & tool outputs"]
         end
 
-        subgraph YOU["YOU CONTROL"]
-            B1["Project instructions (persistent) — CLAUDE.md, copilot-instructions.md, AGENTS.md. Loaded every session."]
-            B2["Memory files (persistent) — MEMORY.md auto, first 200 lines. Topic files load on demand."]
-            B3["Rules (persistent, scoped) — .claude/rules/*.md. Load when matching files are accessed."]
-            B4["Your prompts (session) — What you type. The intent, constraints, examples."]
-            B5["Conversation history (session) — Builds up turn by turn. Lost on compaction."]
-            B6["File contents & outputs (session, on demand) — What the agent reads and what tools return."]
+        subgraph AUTO["AUTOMATIC"]
+            A1["System prompt"]
+            A2["Tool definitions"]
+            A3["Compaction summaries"]
         end
     end
 ```
@@ -215,7 +215,7 @@ Beyond the system message, the tool injects additional context as **annotations 
 ```mermaid
 flowchart LR
     subgraph system["system message"]
-        S1["System prompt\n(vendor instructions)"]
+        S1["System prompt<br/>(vendor instructions)"]
         S2["CLAUDE.md"]
         S3["MEMORY.md"]
         S4["Rules files"]
@@ -230,7 +230,7 @@ flowchart LR
 
         subgraph assistant["assistant messages"]
             A1["Agent reasoning"]
-            A2["Tool calls\n(including subagent spawns)"]
+            A2["Tool calls<br/>(including subagent spawns)"]
         end
 
         subgraph tool["tool results"]
@@ -241,10 +241,10 @@ flowchart LR
         end
     end
 
-    annotations["Injected annotations\n(skill descriptions,\ndeferred tool lists)"]
+    annotations["Injected annotations<br/>(skill descriptions,<br/>deferred tool lists)"]
 
     system --> conversation
-    annotations -.->|appended to\nuser/tool messages| conversation
+    annotations -.->|appended to<br/>user/tool messages| conversation
 ```
 
 **Where skills and agents land in the message flow:**
@@ -361,18 +361,18 @@ That's what **MCP** (Model Context Protocol) does. It's an open standard that le
 
 ```mermaid
 flowchart BT
-    Agent["THE AGENT\n(picks the right tool)"]
+    Agent["THE AGENT<br/>(picks the right tool)"]
 
     subgraph Built-in["Built-in Tools"]
-        B["Read, Write, Edit,\nBash, Grep, Glob"]
+        B["Read, Write, Edit,<br/>Bash, Grep, Glob"]
     end
 
     subgraph GitHub["MCP Server (GitHub)"]
-        G["create_issue, list_prs,\nadd_comment"]
+        G["create_issue, list_prs,<br/>add_comment"]
     end
 
     subgraph Postgres["MCP Server (Postgres)"]
-        P["query, list_tables,\ndescribe"]
+        P["query, list_tables,<br/>describe"]
     end
 
     Built-in --> Agent
@@ -440,13 +440,13 @@ When a task is complex, the agent can spawn **subagents** — isolated instances
 ```mermaid
 flowchart TD
     Main["Main agent"]
-    E["Explore subagent\n(read-only)"]
-    T1["Task subagent\n(full access)"]
-    T2["Task subagent\n(full access)"]
+    E["Explore subagent<br/>(read-only)"]
+    T1["Task subagent<br/>(full access)"]
+    T2["Task subagent<br/>(full access)"]
 
-    Main --> E -- result --> R1["Here's how auth works\nin this codebase"]
-    Main --> T1 -- result --> R2["Tests written\nand passing"]
-    Main --> T2 -- result --> R3["Component\nrefactored"]
+    Main --> E -- result --> R1["Here's how auth works<br/>in this codebase"]
+    Main --> T1 -- result --> R2["Tests written<br/>and passing"]
+    Main --> T2 -- result --> R3["Component<br/>refactored"]
 ```
 
 Built-in subagent types:
@@ -488,10 +488,10 @@ flowchart TD
     Prompt["You type: 'Add rate limiting to the /api/upload endpoint'"]
 
     subgraph Context["CONTEXT LOADS"]
-        CL1["CLAUDE.md: We use Express.\nRate limiting uses express-rate-limit.\nTests in tests/."]
-        CL2["MEMORY.md: User prefers\nfunctional middleware."]
+        CL1["CLAUDE.md: We use Express.<br/>Rate limiting uses express-rate-limit.<br/>Tests in tests/."]
+        CL2["MEMORY.md: User prefers<br/>functional middleware."]
         CL3["System prompt + Tool definitions"]
-        CL4["Your prompt: Add rate limiting\nto /api/upload"]
+        CL4["Your prompt: Add rate limiting<br/>to /api/upload"]
     end
 
     subgraph ReAct["REACT LOOP"]
@@ -500,9 +500,9 @@ flowchart TD
         S3["Think: Let me check existing rate limiting patterns"]
         S4["Act: Grep rateLimit → finds middleware/rate.ts"]
         S5["Think: I'll use the existing helper, add tests"]
-        S6["Act: Edit routes/upload.ts\nWrite tests/upload-rate-limit.test.ts\nBash: npm test"]
+        S6["Act: Edit routes/upload.ts<br/>Write tests/upload-rate-limit.test.ts<br/>Bash: npm test"]
         S7["Hook fires: PostToolUse → prettier formats files"]
-        S8["Think: Done. Rate limiting added,\ntests passing."]
+        S8["Think: Done. Rate limiting added,<br/>tests passing."]
 
         S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
     end
