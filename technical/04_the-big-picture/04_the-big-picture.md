@@ -275,14 +275,14 @@ Not all context is equal. Here's the priority, from most to least reliable:
 
 ```mermaid
 flowchart TD
-    P1["Project instructions (CLAUDE.md)\nYour team's ground truth"]
-    P2["Auto-memory (first 200 lines)\nMEMORY.md — learned preferences"]
-    P3["Rules files (path-specific)\n.claude/rules/ — scoped guardrails"]
-    P4["Your current prompt\nWhat you ask right now"]
-    P5["Conversation history\nBuilds up, then gets compacted away"]
-    P6["Tool outputs & file reads\nOn-demand, cleared first during compaction"]
+    P1["Project instructions (CLAUDE.md)<br/>Your team's ground truth"]
+    P2["Auto-memory (first 200 lines)<br/>MEMORY.md — learned preferences"]
+    P3["Rules files (path-specific)<br/>.claude/rules/ — scoped guardrails"]
+    P4["Your current prompt<br/>What you ask right now"]
+    P5["Conversation history<br/>Builds up, then gets compacted away"]
+    P6["Tool outputs & file reads<br/>On-demand, cleared first during compaction"]
 
-    P1 -- "always loaded,\npersistent" --- P2 --- P3 --- P4 --- P5 -- "ephemeral,\ncompacted" --- P6
+    P1 -- "always loaded,<br/>persistent" --- P2 --- P3 --- P4 --- P5 -- "ephemeral,<br/>compacted" --- P6
 
     style P1 fill:#2d6a4f,color:#fff
     style P2 fill:#40916c,color:#fff

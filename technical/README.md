@@ -24,7 +24,7 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
-| 6 | [From Level 0 to Level 1](06_hands-on-with-agents/06_hands-on-with-agents.md) | Set up your tools, create instruction files, and practice three workflows: complex features, bug fixes, and simple tasks | 45 min |
+| 6 | [A Development Workflow](06_a-development-workflow/06_a-development-workflow.md) | Structure your daily dev workflow around AI agents — from setup to shipping features, fixing bugs, and handling simple tasks | 45 min |
 | 7 | [Reusable Prompts, Skills & Agents](07_skills-and-agents/07_skills-and-agents.md) | Create custom skills and agents — hands-on with a REST Assured test agent | 45 min |
 | 8 | [Multi-Agent Workflows](08_workflows/08_workflows.md) | Orchestrate multi-step workflows with state management and human-in-the-loop | 45 min |
 

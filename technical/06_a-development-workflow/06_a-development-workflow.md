@@ -1,4 +1,4 @@
-# Chapter 6: From Level 0 to Level 1 — Your First Real Agent Workflow
+# Chapter 6: A Development Workflow
 
 ## Where Are You Right Now?
 

@@ -1164,4 +1164,4 @@ Coming up:
 - [JSONPlaceholder](https://jsonplaceholder.typicode.com) — The free fake REST API used in all demos
 - [Chapter 3: Coding with AI Agents](../03_coding-with-agents/03_coding-with-agents.md) — Theory behind skills and agent extensibility
 - [Chapter 4: The Big Picture](../04_the-big-picture/04_the-big-picture.md) — How agents process instructions and manage context
-- [Chapter 6: From L0 to L2](../06_hands-on-with-agents/06_hands-on-with-agents.md) — The plan-build-validate workflow this chapter builds on
+- [Chapter 6: A Development Workflow](../06_a-development-workflow/06_a-development-workflow.md) — The plan-build-validate workflow this chapter builds on
