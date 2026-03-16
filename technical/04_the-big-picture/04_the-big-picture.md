@@ -199,27 +199,25 @@ Under the hood, every LLM conversation is a sequence of **messages** with roles.
 
 | Message role | What it contains | Who sends it |
 |---|---|---|
-| **system** | System prompt, CLAUDE.md, MEMORY.md, rules, tool definitions | The tool (invisible to you) |
-| **user** (human) | Your prompts, hook outputs | You (and the tool on your behalf) |
+| **system** | System prompt (vendor instructions), tool definitions, environment info | The tool (invisible to you) |
+| **user** (human) | Your prompts, hook outputs, `<system-reminder>` annotations (CLAUDE.md, MEMORY.md, rules, skill descriptions, git status, date) | You (and the tool on your behalf) |
 | **assistant** (AI) | Agent's reasoning, tool calls, responses | The model |
 | **tool** | Results from Read, Bash, Grep, MCP calls, subagent results, etc. | The tool execution environment |
 
-The key insight: **persistent context you configure ends up in the system message or injected as annotations on conversation messages.** Both are seen before or alongside your prompts. That's why persistent context is so effective.
+The key insight: **persistent context you configure is injected as `<system-reminder>` annotations on user messages.** These annotations are seen alongside your prompts and carry high priority — the agent treats them as authoritative instructions.
 
-The **system message** is the highest-priority slot — it contains the vendor's core instructions plus your project-level files (CLAUDE.md, MEMORY.md, rules). The model treats system content as ground truth.
+The **system message** contains only the vendor's core instructions (behavior rules, tool usage protocols, tone guidelines) and tool definitions. It does **not** contain your project files.
 
-Beyond the system message, the tool injects additional context as **annotations on conversation messages** — typically as `<system-reminder>` tags appended to user messages or tool results. Skill descriptions, deferred tool lists, and other metadata arrive this way. The agent sees them, but they're technically part of the conversation flow, not the system prompt.
+Your project context — CLAUDE.md, MEMORY.md, rules, skill descriptions, git status, and other metadata — is injected as **`<system-reminder>` tags appended to user messages**. Despite the name, these tags are part of the user message, not the system prompt. The agent sees them and follows them, but they live in the conversation flow.
 
-> **Note:** The exact placement varies by tool and version. Claude Code currently injects skill descriptions as `<system-reminder>` annotations on tool results. Other tools may place them elsewhere. The principle matters more than the exact implementation: some context is system-level (highest priority, never compacted), some is injected into the conversation (still high priority, but subject to compaction in long sessions).
+> **Why this matters:** `<system-reminder>` content on user messages is still high-priority — the model is instructed to treat it as system-level context. But unlike the actual system message, these annotations are subject to compaction in very long sessions. In practice, Claude Code re-injects key annotations (like skill descriptions) periodically to compensate.
 
 ```mermaid
 flowchart LR
     subgraph system["system message"]
         S1["System prompt<br/>(vendor instructions)"]
-        S2["CLAUDE.md"]
-        S3["MEMORY.md"]
-        S4["Rules files"]
         S5["Tool definitions"]
+        S6["Environment info"]
     end
 
     subgraph conversation["conversation messages"]
@@ -241,15 +239,16 @@ flowchart LR
         end
     end
 
-    annotations["Injected annotations<br/>(skill descriptions,<br/>deferred tool lists)"]
+    annotations["&lt;system-reminder&gt; annotations<br/>(CLAUDE.md, MEMORY.md, rules,<br/>skill descriptions, git status)"]
 
     system --> conversation
-    annotations -.->|appended to<br/>user/tool messages| conversation
+    annotations -.->|appended to<br/>user messages| conversation
 ```
 
 **Where skills and agents land in the message flow:**
 
-- **Skill descriptions** (name, one-line summary) are injected as annotations on conversation messages — the agent sees them early and knows what `/commands` are available. The full skill content is **not** loaded yet, keeping things lean. Because these are annotations on the conversation (not the system prompt), they can get compacted in very long sessions — though in practice they're re-injected periodically.
+- **CLAUDE.md, MEMORY.md, and rules** are injected as `<system-reminder>` annotations on user messages at session start. They appear alongside your first prompt and are re-injected periodically. Despite not being in the actual system prompt, the agent is instructed to treat them as authoritative project context.
+- **Skill descriptions** (name, one-line summary) are also injected as `<system-reminder>` annotations on user messages — the agent sees them early and knows what `/commands` are available. The full skill content is **not** loaded yet, keeping things lean. Because these are annotations on the conversation (not the system prompt), they can get compacted in very long sessions — though in practice they're re-injected periodically.
 - **Invoked skill content** — when you type `/skill-name`, the tool expands the skill's full markdown (all the step-by-step instructions, constraints, examples) and injects it into the conversation as if you had typed it yourself. This is why skills feel like prompts on steroids: they literally become your prompt.
 - **Subagent spawns** are **tool calls** in the assistant message. When the main agent decides to delegate work, it calls the Agent tool like any other tool. The subagent runs in its own isolated context window — separate system message, separate conversation — and returns a summary as a **tool result**. The main agent never sees the subagent's internal reasoning, only the final answer.
 - **Custom agents** (Copilot's `.agent.md` files) work similarly — they define a separate system prompt and tool restrictions. When invoked via `@agent-name`, a new context is created with that agent's instructions in its system message.
@@ -258,8 +257,8 @@ This matters because it tells you what the agent sees and when:
 
 | What you define | Where it lands | When the agent sees it |
 |---|---|---|
-| CLAUDE.md, MEMORY.md, rules | System message | Always (highest priority, never compacted) |
-| Skill name + description | Annotation on conversation messages | Session start (re-injected periodically) |
+| CLAUDE.md, MEMORY.md, rules | `<system-reminder>` on user messages | Session start (re-injected periodically, subject to compaction) |
+| Skill name + description | `<system-reminder>` on user messages | Session start (re-injected periodically) |
 | Skill full content | Conversation (as your prompt) | Only when invoked |
 | Subagent instructions | Subagent's system message | Only the subagent sees it |
 | Subagent result | Tool result (main agent) | After the subagent finishes |
@@ -267,7 +266,7 @@ This matters because it tells you what the agent sees and when:
 
 The practical implication: skill descriptions consume context all the time, but the full content only costs context when used. If you have 20 skills, the agent sees 20 short descriptions — manageable. But invoking a skill with a 500-line playbook adds all 500 lines to your conversation. Design skills to be as concise as they need to be, no more.
 
-The conversation alternates: system sets the stage, you send a prompt (user), the agent reasons and calls tools (assistant), tools return results (tool), the agent reasons again (assistant), and so on. Compaction summarizes older user/assistant/tool messages but the system message stays intact — another reason why CLAUDE.md outlasts anything you say in conversation.
+The conversation alternates: the system message sets vendor behavior, `<system-reminder>` annotations deliver your project context alongside your first prompt, then you send prompts (user), the agent reasons and calls tools (assistant), tools return results (tool), the agent reasons again (assistant), and so on. Compaction summarizes older user/assistant/tool messages, but the system message stays intact and key annotations are re-injected — this is why CLAUDE.md outlasts anything you say in conversation.
 
 ### The Hierarchy of Context
 

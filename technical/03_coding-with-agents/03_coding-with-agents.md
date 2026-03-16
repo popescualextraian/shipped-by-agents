@@ -378,7 +378,7 @@ Here's the key insight that changes how you think about all of this:
 
 > **There is no real memory. Everything is context.**
 
-Every "memory" feature works by injecting text into the context window at session start. `CLAUDE.md` is not a database — it's text prepended to the conversation. `MEMORY.md` is not long-term storage — it's a file whose first 200 lines become part of the prompt.
+Every "memory" feature works by injecting text into the context window at session start. `CLAUDE.md` is not a database — it's text injected as a `<system-reminder>` annotation on the first user message. `MEMORY.md` is not long-term storage — it's a file whose first 200 lines are injected the same way. Both ride alongside your prompt, not in the system prompt itself.
 
 Understanding this explains everything:
 
