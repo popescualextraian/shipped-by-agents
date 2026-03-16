@@ -26,7 +26,7 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 |---|---------|-------------------|------|
 | 6 | [From Level 0 to Level 1](06_hands-on-with-agents/06_hands-on-with-agents.md) | Set up your tools, create instruction files, and practice three workflows: complex features, bug fixes, and simple tasks | 45 min |
 | 7 | [Reusable Prompts, Skills & Agents](07_skills-and-agents/07_skills-and-agents.md) | Create custom skills and agents — hands-on with a REST Assured test agent | 45 min |
-| 8 | AI in the Software Lifecycle | Apply agents to design, coding, testing, documentation, and code review | Coming soon |
+| 8 | [Multi-Agent Workflows](08_workflows/08_workflows.md) | Design multi-step workflows with orchestration, state management, and human-in-the-loop — 5 sample implementations across Claude Code and Copilot | 45 min |
 
 ### Mastery
 
