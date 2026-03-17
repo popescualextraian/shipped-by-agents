@@ -608,8 +608,8 @@ Understanding *where* your prompts end up in the message hierarchy is critical f
 | Item | Where it is placed | What it's used for |
 |------|-------------------|-------------------|
 | **System prompt** | System message | Global rules, safety, tool access, baseline behavior. Set by the framework. |
-| **CLAUDE.md** | User message (injected after system) | Project conventions, coding standards, repo-specific guidance |
-| **Skills** | User message (when invoked) + system-side metadata for discovery | Procedural "how-to" instructions for a task |
+| **CLAUDE.md** | `<system-reminder>` annotation on user message | Project conventions, coding standards, repo-specific guidance |
+| **Skills** | User message (when invoked) + `<system-reminder>` annotation for discovery | Procedural "how-to" instructions for a task |
 | **Sub-agents** | System message (at sub-agent startup) | Behavioral persona, boundaries, delegated responsibility |
 
 ### Comparison
@@ -617,11 +617,11 @@ Understanding *where* your prompts end up in the message hierarchy is critical f
 | Feature | Skills | Sub-Agents |
 |---------|--------|------------|
 | **Primary location** | User message (on invocation) | System message (at startup) |
-| **Metadata** | Loaded in system prompt for discovery | Loaded in system prompt as identity |
+| **Metadata** | `<system-reminder>` annotation on user messages for discovery | Loaded in system prompt as identity |
 | **Instruction type** | Procedural task instructions | Behavioral role + boundaries |
 | **Persistence** | Loaded on-demand, stays in conversation history | Foundation for the entire isolated session |
 
-**Important note on CLAUDE.md:** A project's CLAUDE.md is injected as a **user message** after the system prompt — it is not part of the system prompt itself.
+**Important note on CLAUDE.md:** A project's CLAUDE.md is injected as a `<system-reminder>` annotation on a **user message** — it is not part of the system prompt itself. The agent is instructed to treat these annotations as authoritative, but they live in the conversation flow and can be compacted (though they are re-injected periodically).
 
 ### Why This Matters for Workflows
 

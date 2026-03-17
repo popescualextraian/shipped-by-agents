@@ -62,24 +62,30 @@ Skills load in two stages. This is a key design decision you need to understand.
 **Stage 2 — Full content on invocation.** When you type `/skill-name`, the tool expands the full Markdown body and injects it into the conversation as if you had typed it yourself — it becomes a user message. The agent then follows those instructions using its existing session context.
 
 ```
-┌─────────────────────────────────────────────────┐
-│  Session start                                  │
-│  ┌────────────────────────────────────────────┐ │
-│  │ system prompt: CLAUDE.md, MEMORY.md, rules │ │
-│  └────────────────────────────────────────────┘ │
-│  ┌────────────────────────────────────────────┐ │
-│  │ annotations: skill descriptions (names +   │ │
-│  │ one-liners for all skills)                 │ │
-│  └────────────────────────────────────────────┘ │
-│                                                 │
-│  User types: /rest-api-testing Run all tests    │
-│  ┌────────────────────────────────────────────┐ │
-│  │ user message: [full SKILL.md content]      │ │
-│  │ + "Run all tests"                          │ │
-│  └────────────────────────────────────────────┘ │
-│                                                 │
-│  Agent follows skill instructions...            │
-└─────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│  Session start                                        │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ SYSTEM message: vendor instructions + tools     │  │
+│  └─────────────────────────────────────────────────┘  │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ USER message:                                   │  │
+│  │   <system-reminder>                             │  │
+│  │     CLAUDE.md, MEMORY.md, rules                 │  │
+│  │   </system-reminder>                            │  │
+│  │   <system-reminder>                             │  │
+│  │     skill descriptions (names + one-liners)     │  │
+│  │   </system-reminder>                            │  │
+│  │   "Hello, let's work on the API"                │  │
+│  └─────────────────────────────────────────────────┘  │
+│                                                       │
+│  User types: /rest-api-testing Run all tests          │
+│  ┌─────────────────────────────────────────────────┐  │
+│  │ USER message (injected): [full SKILL.md content]│  │
+│  │ + "Run all tests"                               │  │
+│  └─────────────────────────────────────────────────┘  │
+│                                                       │
+│  Agent follows skill instructions...                  │
+└───────────────────────────────────────────────────────┘
 ```
 
 **Why this matters:**
@@ -165,14 +171,17 @@ To tie it all together, here's where each customization mechanism lands in the a
 
 | What you define | Where it lands | When the agent sees it | Survives compaction? |
 |---|---|---|---|
-| CLAUDE.md, MEMORY.md | System message | Always — highest priority | Yes (system message is never compacted) |
-| Rules (`.claude/rules/`) | System message (when glob matches) | When the agent touches matching files | Yes |
-| Skill descriptions | Annotations on conversation messages | Session start, re-injected periodically | Partially (can be re-injected) |
-| Skill full content | Conversation (as user message) | Only when invoked | No (compacted like any message) |
+| CLAUDE.md, MEMORY.md | `<system-reminder>` annotation on user messages | Session start, re-injected periodically | Re-injected after compaction |
+| Rules (`.claude/rules/`) | `<system-reminder>` annotation on user messages | When glob pattern matches touched files | Re-injected after compaction |
+| Skill descriptions | `<system-reminder>` annotation on user messages | Session start, re-injected periodically | Re-injected after compaction |
+| Skill full content | New user message in conversation | Only when invoked | No (compacted like any message) |
+| Skill with `context: fork` | Subagent's prompt (isolated context) | Only when invoked | N/A (isolated context) |
 | Agent persona (Copilot) | Separate system message (isolated context) | Only the agent sees it | Yes (within its own context) |
 | Agent result | Tool result (main conversation) | After the agent finishes | No (compacted like any message) |
 
-**The practical implication:** CLAUDE.md and rules are permanent — they survive any conversation length. Skill content is ephemeral — it loads on demand and gets compacted when the conversation grows long. Design your skills to be self-contained: every invocation should include everything the agent needs, because it can't rely on prior invocations still being in context.
+> **Note:** The official docs say CLAUDE.md is "loaded into context" without specifying the exact mechanism. If you ask the agent to introspect (e.g., *"How did you receive my CLAUDE.md?"*), you'll find it arrives as `<system-reminder>` annotations on user messages — not in the system message. See Chapter 4 for the full message model. This is an implementation detail that could change, but understanding it helps you reason about context priority and compaction.
+
+**The practical implication:** CLAUDE.md and rules are re-injected after compaction, so they outlast anything you say in conversation. But they're not in the system message — they can briefly disappear during compaction before being re-injected. Skill content is ephemeral — it loads on demand and gets compacted when the conversation grows long. Design your skills to be self-contained: every invocation should include everything the agent needs, because it can't rely on prior invocations still being in context.
 
 ### A Skill Is a Folder, Not a File
 

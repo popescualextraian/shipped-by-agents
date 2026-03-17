@@ -117,20 +117,20 @@ flowchart TD
 
 ### The Control Matrix
 
-| Context source | Who writes it | When it loads | Persists across sessions | You can edit it |
+| Context source | What it is | Who writes it | When it loads | Persists across sessions |
 |---|---|---|---|---|
-| System prompt | Tool vendor | Session start | Always | No |
-| Tool definitions | Built-in + MCP config | Session start | Always | Indirectly (MCP config) |
-| Project instructions (CLAUDE.md) | You | Session start | Yes | Yes |
-| User instructions (~/.claude/CLAUDE.md) | You | Session start | Yes | Yes |
-| Rules (.claude/rules/) | You | On demand (path-scoped) | Yes | Yes |
-| Auto-memory (MEMORY.md) | Agent (you can edit) | Session start (200 lines) | Yes | Yes |
-| Skill descriptions | You | Session start | Yes | Yes |
-| Your prompt | You | When you type | No (session only) | N/A |
-| Conversation history | You + agent | Accumulated | No (session only) | No |
-| File contents | Codebase | On demand (agent reads) | No (session only) | Yes (your code) |
-| Tool outputs | Tools | On demand (agent runs) | No (session only) | No |
-| Compaction summaries | Agent | When context fills | No | No |
+| System prompt | Vendor's core behavior rules, tone, and safety guardrails — invisible to you, not editable | Tool vendor | Session start | Always |
+| Tool definitions | Schemas for every tool the agent can call (Read, Bash, Edit, MCP tools, etc.) | Built-in + MCP config | Session start | Always |
+| Project instructions (CLAUDE.md) | Your team's ground truth — conventions, stack, workflow rules. Lives in the repo root. | You | Session start | Yes |
+| User instructions (~/.claude/CLAUDE.md) | Personal preferences that apply to all your projects (e.g., "always use dark mode in examples") | You | Session start | Yes |
+| Rules (.claude/rules/) | Scoped guardrails that activate only when the agent touches matching file paths (e.g., "*.test.ts" rules) | You | On demand (path-scoped) | Yes |
+| Auto-memory (MEMORY.md) | Agent-maintained notes about your preferences and project context. First 200 lines are loaded. | Agent (you can edit) | Session start (200 lines) | Yes |
+| Skill descriptions | One-line summaries from each skill's frontmatter — the agent's routing table for `/commands` | You | Session start | Yes |
+| Your prompt | What you type right now — the most direct but least persistent form of context | You | When you type | No (session only) |
+| Conversation history | Every message exchanged during the session — builds up, then gets compacted | You + agent | Accumulated | No (session only) |
+| File contents | Code the agent reads from your codebase on demand — ephemeral, first to be compacted | Codebase | On demand (agent reads) | No (session only) |
+| Tool outputs | Results from running commands, searches, MCP calls — ephemeral | Tools | On demand (agent runs) | No (session only) |
+| Compaction summaries | Automatic summaries the agent creates when context fills up — you don't control what's kept | Agent | When context fills | No |
 
 Here's what each of these looks like in practice:
 
@@ -195,78 +195,178 @@ VS Code agent mode also reads `.claude/rules/` for cross-tool compatibility.
 
 ### How Context Maps to the Message Model
 
-Under the hood, every LLM conversation is a sequence of **messages** with roles. Understanding this helps you see where each context type actually lands:
+Under the hood, every LLM conversation is a sequence of **messages** with roles. Understanding where each context type lands helps you design better instructions and debug problems when the agent doesn't behave as expected.
 
-| Message role | What it contains | Who sends it |
+#### The four message roles
+
+Every message in the conversation has one of four roles:
+
+| Role | What it carries | Who creates it |
 |---|---|---|
-| **system** | System prompt (vendor instructions), tool definitions, environment info | The tool (invisible to you) |
-| **user** (human) | Your prompts, hook outputs, `<system-reminder>` annotations (CLAUDE.md, MEMORY.md, rules, skill descriptions, git status, date) | You (and the tool on your behalf) |
-| **assistant** (AI) | Agent's reasoning, tool calls, responses | The model |
-| **tool** | Results from Read, Bash, Grep, MCP calls, subagent results, etc. | The tool execution environment |
+| **system** | Vendor instructions, tool definitions, environment info | The tool (invisible to you) |
+| **user** | Your prompts + injected annotations | You (and the tool on your behalf) |
+| **assistant** | Agent reasoning, tool calls, text responses | The model |
+| **tool** | Results from Read, Bash, Grep, MCP calls, subagent results | The tool execution environment |
 
-The key insight: **persistent context you configure is injected as `<system-reminder>` annotations on user messages.** These annotations are seen alongside your prompts and carry high priority — the agent treats them as authoritative instructions.
+The **system message** is the first message in every conversation. It contains the vendor's core instructions — behavior rules, tool usage protocols, tone guidelines, environment details (OS, shell, working directory), and the full definitions of every available tool. It does **not** contain your project files, your CLAUDE.md, or your memory.
 
-The **system message** contains only the vendor's core instructions (behavior rules, tool usage protocols, tone guidelines) and tool definitions. It does **not** contain your project files.
+So where does your project context go?
 
-Your project context — CLAUDE.md, MEMORY.md, rules, skill descriptions, git status, and other metadata — is injected as **`<system-reminder>` tags appended to user messages**. Despite the name, these tags are part of the user message, not the system prompt. The agent sees them and follows them, but they live in the conversation flow.
+#### Discovering where CLAUDE.md actually lands
 
-> **Why this matters:** `<system-reminder>` content on user messages is still high-priority — the model is instructed to treat it as system-level context. But unlike the actual system message, these annotations are subject to compaction in very long sessions. In practice, Claude Code re-injects key annotations (like skill descriptions) periodically to compensate.
+The official documentation says CLAUDE.md is "loaded into context." But what does that mean exactly? Which message does it end up in?
 
-```mermaid
-flowchart LR
-    subgraph system["system message"]
-        S1["System prompt<br/>(vendor instructions)"]
-        S5["Tool definitions"]
-        S6["Environment info"]
-    end
+You can find out by asking the agent to introspect. Try prompting: *"Describe how you received my CLAUDE.md content. What message role is it in? What tags wrap it?"*
 
-    subgraph conversation["conversation messages"]
-        subgraph user["user messages"]
-            U1["Your prompts"]
-            U2["Hook outputs"]
-        end
+When you do this, you discover something surprising: **your CLAUDE.md is not in the system message.** Instead, it's injected as a `<system-reminder>` annotation inside a user message. Here's what the agent actually sees (simplified):
 
-        subgraph assistant["assistant messages"]
-            A1["Agent reasoning"]
-            A2["Tool calls<br/>(including subagent spawns)"]
-        end
+```
+SYSTEM MESSAGE:
+  "You are Claude Code, Anthropic's official CLI..."
+  [tool definitions]
+  [environment info]
 
-        subgraph tool["tool results"]
-            T1["File contents"]
-            T2["Command outputs"]
-            T3["MCP results"]
-            T4["Subagent results"]
-        end
-    end
+USER MESSAGE:
+  <system-reminder>
+  Contents of /your-project/CLAUDE.md:
+  [your project instructions]
 
-    annotations["&lt;system-reminder&gt; annotations<br/>(CLAUDE.md, MEMORY.md, rules,<br/>skill descriptions, git status)"]
+  Contents of ~/.claude/projects/.../memory/MEMORY.md:
+  [your auto-memory]
+  </system-reminder>
 
-    system --> conversation
-    annotations -.->|appended to<br/>user messages| conversation
+  <system-reminder>
+  Available skills:
+  - commit: Use when the user asks to commit...
+  - review-pr: Use when reviewing pull requests...
+  </system-reminder>
+
+  "Please add a login page"     ← your actual prompt
 ```
 
-**Where skills and agents land in the message flow:**
+The `<system-reminder>` tags are part of the user message text, not separate messages. The agent's system prompt tells it to treat these tags as authoritative instructions — so they carry high priority despite not being in the actual system message.
 
-- **CLAUDE.md, MEMORY.md, and rules** are injected as `<system-reminder>` annotations on user messages at session start. They appear alongside your first prompt and are re-injected periodically. Despite not being in the actual system prompt, the agent is instructed to treat them as authoritative project context.
-- **Skill descriptions** (name, one-line summary) are also injected as `<system-reminder>` annotations on user messages — the agent sees them early and knows what `/commands` are available. The full skill content is **not** loaded yet, keeping things lean. Because these are annotations on the conversation (not the system prompt), they can get compacted in very long sessions — though in practice they're re-injected periodically.
-- **Invoked skill content** — when you type `/skill-name`, the tool expands the skill's full markdown (all the step-by-step instructions, constraints, examples) and injects it into the conversation as if you had typed it yourself. This is why skills feel like prompts on steroids: they literally become your prompt.
-- **Subagent spawns** are **tool calls** in the assistant message. When the main agent decides to delegate work, it calls the Agent tool like any other tool. The subagent runs in its own isolated context window — separate system message, separate conversation — and returns a summary as a **tool result**. The main agent never sees the subagent's internal reasoning, only the final answer.
-- **Custom agents** (Copilot's `.agent.md` files) work similarly — they define a separate system prompt and tool restrictions. When invoked via `@agent-name`, a new context is created with that agent's instructions in its system message.
+> **Why does it work this way?** The system message is controlled by the vendor (Anthropic, GitHub, etc.). Your project context rides alongside your prompts in user messages, where it's easy to inject, update, and re-inject. The trade-off: unlike the system message (which is never compacted), `<system-reminder>` content on user messages *can* be compacted in very long sessions. In practice, Claude Code re-injects key annotations periodically to compensate.
 
-This matters because it tells you what the agent sees and when:
+#### The full message flow
 
-| What you define | Where it lands | When the agent sees it |
+Here's how a complete conversation looks, from session start through skill invocation and subagent execution:
+
+```mermaid
+flowchart TD
+    subgraph session["A Claude Code Session"]
+        direction TB
+
+        M1["<b>① SYSTEM message</b><br/>Vendor instructions<br/>Tool definitions<br/>Environment info"]
+
+        M2["<b>② USER message</b><br/>&lt;system-reminder&gt; CLAUDE.md, MEMORY.md &lt;/system-reminder&gt;<br/>&lt;system-reminder&gt; Skill descriptions &lt;/system-reminder&gt;<br/>&lt;system-reminder&gt; Git status, date &lt;/system-reminder&gt;<br/><i>Your prompt: 'Add a login page'</i>"]
+
+        M3["<b>③ ASSISTANT message</b><br/>Reasoning + tool calls<br/>(Read, Bash, Edit, Agent, Skill...)"]
+
+        M4["<b>④ TOOL result</b><br/>File contents, command outputs,<br/>MCP results, subagent summaries"]
+
+        M5["<b>⑤ ASSISTANT message</b><br/>More reasoning, more tool calls..."]
+
+        M6["<b>⑥ USER message (injected by tool)</b><br/>Full SKILL.md content injected<br/>when you invoke /skill-name"]
+
+        M1 --> M2 --> M3 --> M4 --> M5 --> M6
+    end
+
+    style M1 fill:#0A2540,color:#fff
+    style M2 fill:#00BFA5,color:#fff
+    style M3 fill:#f7f9fb,color:#0A2540,stroke:#e0e6ed
+    style M4 fill:#f7f9fb,color:#0A2540,stroke:#e0e6ed
+    style M5 fill:#f7f9fb,color:#0A2540,stroke:#e0e6ed
+    style M6 fill:#E8722A,color:#fff
+```
+
+#### Where each config file lands — the complete map
+
+| What you define | Where it lands | When loaded | Context isolation |
+|---|---|---|---|
+| CLAUDE.md, MEMORY.md | `<system-reminder>` annotation on user messages | Session start, re-injected periodically | Shared — in your main conversation |
+| Rules (`.claude/rules/`) | `<system-reminder>` annotation on user messages | When glob pattern matches touched files | Shared |
+| Skill name + description | `<system-reminder>` annotation on user messages | Session start, re-injected periodically | Shared |
+| Skill full content | New **user message** in the conversation | Only when you invoke `/skill-name` | Shared — skill sees your full conversation history |
+| Skill with `context: fork` | **Subagent's prompt** (isolated context) | Only when invoked | **Isolated** — no conversation history, result returns as tool result |
+| Subagent (Agent tool) | Subagent's own system + user messages | When the agent spawns it | **Isolated** — separate context window |
+| Subagent result | **Tool result** in main conversation | After the subagent finishes | Shared (just the summary) |
+| Custom agent (Copilot `.agent.md`) | That agent's **system message** | When you invoke `@agent-name` | **Isolated** — separate context window |
+
+#### Skills: shared context vs. isolated context
+
+By default, a skill shares your session context. When you type `/my-skill`, the full SKILL.md content is injected as a new user message in your existing conversation. The agent can see everything — your prior messages, files it read, decisions you made. The skill builds on your current session.
+
+But sometimes you want a skill to run in isolation — like a subagent. Add `context: fork` to the skill's frontmatter:
+
+```yaml
+---
+name: deep-research
+description: Research a topic thoroughly
+context: fork
+agent: Explore
+---
+
+Research $ARGUMENTS thoroughly:
+1. Find relevant files using Glob and Grep
+2. Read and analyze the code
+3. Summarize findings with specific file references
+```
+
+With `context: fork`:
+1. A new, isolated context is created (no conversation history)
+2. The skill content becomes the subagent's prompt
+3. The `agent` field picks the execution environment (model, tools, permissions)
+4. The result is summarized and returned to your main conversation as a **tool result**
+
+This is the bridge between skills and agents: **a forked skill is functionally a subagent** — it just uses the simpler skill file format.
+
+| | Default skill | Skill with `context: fork` |
 |---|---|---|
-| CLAUDE.md, MEMORY.md, rules | `<system-reminder>` on user messages | Session start (re-injected periodically, subject to compaction) |
-| Skill name + description | `<system-reminder>` on user messages | Session start (re-injected periodically) |
-| Skill full content | Conversation (as your prompt) | Only when invoked |
-| Subagent instructions | Subagent's system message | Only the subagent sees it |
-| Subagent result | Tool result (main agent) | After the subagent finishes |
-| Custom agent persona | That agent's system message | Only that agent sees it |
+| **Sees conversation history?** | Yes | No |
+| **Where content lands** | User message in main conversation | Subagent's prompt (isolated) |
+| **Result delivery** | Agent continues in same conversation | Summary returned as tool result |
+| **Use when** | Skill needs session context (prior decisions, files read) | Skill is self-contained and shouldn't pollute main context |
 
-The practical implication: skill descriptions consume context all the time, but the full content only costs context when used. If you have 20 skills, the agent sees 20 short descriptions — manageable. But invoking a skill with a 500-line playbook adds all 500 lines to your conversation. Design skills to be as concise as they need to be, no more.
+#### Auto-triggering and how to control it
 
-The conversation alternates: the system message sets vendor behavior, `<system-reminder>` annotations deliver your project context alongside your first prompt, then you send prompts (user), the agent reasons and calls tools (assistant), tools return results (tool), the agent reasons again (assistant), and so on. Compaction summarizes older user/assistant/tool messages, but the system message stays intact and key annotations are re-injected — this is why CLAUDE.md outlasts anything you say in conversation.
+Skills can be invoked in two ways:
+
+1. **Manual** — you type `/skill-name`
+2. **Auto-triggered** — the agent reads the skill description and decides it's relevant to your request
+
+Auto-triggering is controlled entirely by the **description field** in the skill's frontmatter. The description is the agent's routing table. A description like *"Use when creating REST API integration tests"* tells the agent exactly when to activate — if you ask it to write API tests, it will invoke the skill automatically.
+
+To prevent auto-triggering, write the description so it doesn't match common requests. For example:
+- `"Use when the user explicitly asks to run the deployment checklist"` — the word "explicitly" signals manual-only intent
+- Keep the description narrow and specific rather than broad
+
+There is no `auto_invoke: false` frontmatter field. The description text is the only mechanism.
+
+#### Parallel execution
+
+When the agent needs to do multiple independent things, it can make **multiple tool calls in a single assistant message**. This includes spawning multiple subagents at once:
+
+```
+ASSISTANT message:
+  Tool call 1: Agent("Research authentication patterns")
+  Tool call 2: Agent("Find all API endpoints")
+  Tool call 3: Agent("Check test coverage")
+```
+
+All three subagents run in parallel, each in its own isolated context. Their results come back as three separate tool results. The main agent then synthesizes them.
+
+This works because subagents are just tool calls — and the runtime can execute independent tool calls concurrently. The same applies to any combination of tools: the agent can read a file, run a command, and spawn a subagent all in one message.
+
+Skills with `context: fork` also run as subagents, so they can be parallelized the same way. Default skills (without `context: fork`) cannot run in parallel — they inject content into the main conversation sequentially.
+
+#### Practical implications
+
+**Skill descriptions are always in context** — 20 skills with one-line descriptions cost almost nothing. But invoking a skill with a 500-line playbook adds all 500 lines to your conversation. Design skill content to be as concise as it needs to be, no more.
+
+**The conversation alternates:** system message sets vendor behavior → `<system-reminder>` annotations deliver your project context alongside your first prompt → you send prompts (user) → the agent reasons and calls tools (assistant) → tools return results → the agent reasons again → and so on. Compaction summarizes older messages, but the system message stays intact and key annotations are re-injected. This is why CLAUDE.md outlasts anything you say in conversation.
+
+**Subagents protect your main context.** Heavy research tasks (reading dozens of files, searching broadly) are better delegated to subagents. They do the work in their own context and return only a summary. Your main conversation stays lean.
 
 ### The Hierarchy of Context
 
