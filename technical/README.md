@@ -32,6 +32,6 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
-| 9 | Spec-Driven Development | Drive entire features from specs using agents | Coming soon |
-| 10 | External Tools & Data | Connect agents to APIs, databases, and external services | Coming soon |
+| 9 | [Automating User Story Creation](09_story-creation/09_story-creation.md) | Apply skill-building to non-coding tasks — user stories, MCP integration, Atlassian connectivity | 30 min |
+| 10 | External Tools & Data (MCP) | Deep dive into MCP — configure servers, build your own, connect agents to external systems | Coming soon |
 | 11 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |
