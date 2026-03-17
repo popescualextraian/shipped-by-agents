@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520">
+  <defs>
+    <style>
+      text { font-family: 'Segoe UI', system-ui, sans-serif; }
+      .title { font-size: 14px; font-weight: 600; fill: #fff; }
+      .title-dark { font-size: 14px; font-weight: 600; fill: #0A2540; }
+      .subtitle { font-size: 11px; fill: #94a3b8; }
+      .subtitle-dark { font-size: 11px; fill: #4a5568; }
+      .label { font-size: 12px; font-weight: 600; fill: #0A2540; }
+      .label-light { font-size: 12px; font-weight: 600; fill: #fff; }
+      .group-label { font-size: 13px; font-weight: 700; fill: #4a5568; letter-spacing: 1px; text-transform: uppercase; }
+      .arrow-label { font-size: 10px; fill: #cbd5e1; }
+      .mcp-badge { font-size: 9px; font-weight: 600; fill: #fff; }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="520" fill="#fff" rx="8"/>
+
+  <!-- INPUTS group -->
+  <rect x="20" y="50" width="240" height="420" rx="8" fill="#f7f9fb" stroke="#e0e6ed" stroke-width="1"/>
+  <text x="140" y="35" text-anchor="middle" class="group-label">Inputs</text>
+
+  <!-- Input cards -->
+  <rect x="40" y="75" width="200" height="60" rx="6" fill="#0A2540"/>
+  <text x="140" y="100" text-anchor="middle" class="title">Project Codebase</text>
+  <text x="140" y="118" text-anchor="middle" class="subtitle">CLAUDE.md, source files,</text>
+
+  <rect x="40" y="155" width="200" height="60" rx="6" fill="#0A2540"/>
+  <text x="140" y="180" text-anchor="middle" class="title">Local References</text>
+  <text x="140" y="198" text-anchor="middle" class="subtitle">markdown, design docs</text>
+
+  <rect x="40" y="235" width="200" height="60" rx="6" fill="#00BFA5"/>
+  <text x="140" y="260" text-anchor="middle" class="title">Confluence Pages</text>
+  <text x="140" y="278" text-anchor="middle" class="subtitle">via MCP</text>
+
+  <rect x="40" y="315" width="200" height="60" rx="6" fill="#0A2540"/>
+  <text x="140" y="340" text-anchor="middle" class="title">User Input</text>
+  <text x="140" y="358" text-anchor="middle" class="subtitle">clarifications, priorities</text>
+
+  <rect x="40" y="395" width="200" height="60" rx="6" fill="#4a4a4a"/>
+  <text x="140" y="420" text-anchor="middle" class="title">Web Resources</text>
+  <text x="140" y="438" text-anchor="middle" class="subtitle">public docs, APIs, standards</text>
+
+  <!-- SKILL group -->
+  <rect x="330" y="50" width="240" height="420" rx="8" fill="#f7f9fb" stroke="#e0e6ed" stroke-width="1"/>
+  <text x="450" y="35" text-anchor="middle" class="group-label">Skill</text>
+
+  <rect x="350" y="75" width="200" height="60" rx="6" fill="#f7f9fb" stroke="#0A2540" stroke-width="2"/>
+  <text x="450" y="100" text-anchor="middle" class="title-dark">SKILL.md</text>
+  <text x="450" y="118" text-anchor="middle" class="subtitle-dark">agent instructions</text>
+
+  <rect x="350" y="175" width="200" height="60" rx="6" fill="#f7f9fb" stroke="#0A2540" stroke-width="2"/>
+  <text x="450" y="200" text-anchor="middle" class="title-dark">Story Template</text>
+  <text x="450" y="218" text-anchor="middle" class="subtitle-dark">config + placeholders</text>
+
+  <rect x="350" y="275" width="200" height="60" rx="6" fill="#f7f9fb" stroke="#0A2540" stroke-width="2"/>
+  <text x="450" y="300" text-anchor="middle" class="title-dark">Reference Manager</text>
+  <text x="450" y="318" text-anchor="middle" class="subtitle-dark">ref_manager.py</text>
+
+  <rect x="350" y="375" width="200" height="60" rx="6" fill="#f7f9fb" stroke="#00BFA5" stroke-width="2"/>
+  <text x="450" y="400" text-anchor="middle" class="title-dark">Atlassian MCP</text>
+  <text x="450" y="418" text-anchor="middle" class="subtitle-dark">JIRA + Confluence tools</text>
+
+  <!-- OUTPUTS group -->
+  <rect x="640" y="50" width="240" height="420" rx="8" fill="#f7f9fb" stroke="#e0e6ed" stroke-width="1"/>
+  <text x="760" y="35" text-anchor="middle" class="group-label">Outputs</text>
+
+  <rect x="660" y="150" width="200" height="70" rx="6" fill="#0A2540"/>
+  <text x="760" y="178" text-anchor="middle" class="title">Local Story Draft</text>
+  <text x="760" y="198" text-anchor="middle" class="subtitle">user-stories/stories/*.md</text>
+
+  <rect x="660" y="280" width="200" height="70" rx="6" fill="#00BFA5"/>
+  <text x="760" y="308" text-anchor="middle" class="title">JIRA Issue</text>
+  <text x="760" y="328" text-anchor="middle" class="subtitle">via MCP push</text>
+
+  <!-- Arrows: Inputs → Skill -->
+  <line x1="240" y1="105" x2="348" y2="105" stroke="#0A2540" stroke-width="1.5" marker-end="url(#arrowDark)"/>
+  <line x1="240" y1="185" x2="348" y2="295" stroke="#0A2540" stroke-width="1.5" marker-end="url(#arrowDark)"/>
+  <line x1="240" y1="265" x2="348" y2="305" stroke="#00BFA5" stroke-width="1.5" marker-end="url(#arrowTeal)"/>
+  <line x1="240" y1="345" x2="348" y2="105" stroke="#0A2540" stroke-width="1.5" marker-end="url(#arrowDark)"/>
+  <line x1="240" y1="425" x2="348" y2="105" stroke="#4a4a4a" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arrowMuted)"/>
+
+  <!-- Arrows: Skill → Outputs -->
+  <line x1="552" y1="105" x2="658" y2="180" stroke="#0A2540" stroke-width="1.5" marker-end="url(#arrowDark)"/>
+  <line x1="552" y1="405" x2="658" y2="310" stroke="#00BFA5" stroke-width="1.5" marker-end="url(#arrowTeal)"/>
+
+  <!-- Internal skill arrows -->
+  <line x1="450" y1="137" x2="450" y2="173" stroke="#e0e6ed" stroke-width="1" marker-end="url(#arrowLight)"/>
+  <line x1="450" y1="237" x2="450" y2="273" stroke="#e0e6ed" stroke-width="1" marker-end="url(#arrowLight)"/>
+  <line x1="450" y1="337" x2="450" y2="373" stroke="#e0e6ed" stroke-width="1" marker-end="url(#arrowLight)"/>
+
+  <!-- MCP badge on Confluence arrow -->
+  <rect x="272" y="275" width="40" height="18" rx="9" fill="#00BFA5"/>
+  <text x="292" y="288" text-anchor="middle" class="mcp-badge">MCP</text>
+
+  <!-- MCP badge on JIRA arrow -->
+  <rect x="590" y="300" width="40" height="18" rx="9" fill="#00BFA5"/>
+  <text x="610" y="313" text-anchor="middle" class="mcp-badge">MCP</text>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowDark" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#0A2540"/>
+    </marker>
+    <marker id="arrowTeal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#00BFA5"/>
+    </marker>
+    <marker id="arrowMuted" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#4a4a4a"/>
+    </marker>
+    <marker id="arrowLight" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#e0e6ed"/>
+    </marker>
+  </defs>
+</svg>

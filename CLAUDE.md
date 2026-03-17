@@ -27,7 +27,7 @@ Training documentation for developers and teams looking to understand, adopt, an
 | 6 | From Level 0 to Level 1: your first real agent workflow | 45 min | Done |
 | 7 | Creating reusable prompts, skills, or simple agents | 45 min | Done |
 | 8 | Multi-agent workflows: orchestration, state, and human-in-the-loop | 45 min | Done |
-| 9 | Spec-driven development with AI | TBD | Pending |
+| 9 | Automating user story creation | 30 min | Done |
 | 10 | Integration with external tools and data | TBD | Pending |
 | 11 | Practical workflow examples and productivity tips | TBD | Pending |
 
