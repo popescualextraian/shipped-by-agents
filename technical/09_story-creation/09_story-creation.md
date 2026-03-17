@@ -13,7 +13,7 @@ Think about what else happens in a sprint:
 
 These tasks are repetitive, template-driven, and context-heavy — exactly the kind of work an AI agent handles well. In this chapter, you'll see how to apply skill-building techniques to **user story creation**: a non-coding task that every development team does, and few do efficiently.
 
-We'll walk through the design decisions behind a working skill, explore how to bring external data into the agent's context, and produce a reusable tool your team can adopt today. The complete implementation lives in this chapter's `user-stories/` folder.
+We'll walk through the design decisions behind a complete skill, explore how to bring external data into the agent's context, and then strip it all down to the simplest version that still works. The full skill implementation lives in this chapter's `user-stories/` folder; the minimal version lives in `user-stories-simple/`.
 
 ---
 
@@ -61,26 +61,19 @@ We'll cover MCP architecture, how to build your own servers, and advanced integr
 
 ## Approaching the Problem
 
-Building a story-creation skill is no different from building a code-focused skill. You need three things:
+Regardless of how you implement it, you need three things to automate story creation:
 
-### 1. Inputs — Where does the data come from?
+1. **Inputs** — the codebase (already available), local docs, Confluence pages, and the user's direction
+2. **A template** — the story format your team uses, with JIRA field mappings and defaults
+3. **Connectivity** — a way to reach JIRA and Confluence (the Atlassian MCP server)
 
-The agent needs context to write a good story. That context comes from multiple sources:
+The question is: **how much infrastructure do you build around these three things?** We'll start with a full skill — the academic example — then strip it down to the bare minimum.
 
-- **The codebase** — already available through instruction files and file exploration
-- **Local references** — markdown files, design docs, requirements — anything on disk
-- **External references** — Confluence pages, wiki articles, shared documents
-- **The user** — clarifications, priorities, scope decisions
+---
 
-The skill needs a way to **register and track** these references so it knows where to look when drafting a story.
+## The Full Skill — An Academic Example
 
-### 2. Template — What should the output look like?
-
-Enterprise teams don't write stories freeform. They have formats: required fields, JIRA field mappings, acceptance criteria checklists, subtask structures. The skill needs a **template** that defines the story structure and carries project-specific configuration — epic links, custom field IDs, priority defaults.
-
-### 3. Connectivity — How do you reach external systems?
-
-Reading Confluence and pushing to JIRA require API calls. The skill uses the Atlassian MCP server for this, but it's designed to work without it. Every operation either works fully (with MCP), partially (without MCP), or offers manual alternatives.
+The complete skill lives in `user-stories/` alongside this chapter. It has a SKILL.md, a Python CLI for reference management, templates, and detailed agent instructions. We'll walk through the design decisions and key components — not every line of code, but everything you need to understand the architecture.
 
 ### How It Fits Together
 
@@ -124,21 +117,13 @@ graph TB
     style I fill:#00BFA5,color:#fff
 ```
 
-The diagram shows the data flow: inputs feed into the skill's three components (reference manager, template, instructions), which produce either a local draft or a JIRA issue. Confluence and JIRA paths go through MCP — everything else is local.
+### Key Design Decisions
 
----
+**Template-driven, not hardcoded.** The skill doesn't know anything about your project's JIRA setup. Field mappings, custom field IDs, default epics — all of it lives in the template's configuration block. Change the template, and the skill adapts. One skill serves multiple projects.
 
-## The User Story Skill — A Walkthrough
+**Reference tracking with a CLI.** `ref_manager.py` (~430 lines of Python) manages a persistent `references.json` index. It handles init, add, remove, list, and tracks download state for Confluence pages. The agent calls it through Bash.
 
-The complete skill lives in `user-stories/` alongside this chapter. Here we'll walk through the design decisions and key components — not every line of code, but everything you need to understand the architecture and adapt it to your own use case.
-
-### Design Decisions
-
-**Template-driven, not hardcoded.** The skill doesn't know anything about your project's JIRA setup. Field mappings, custom field IDs, default epics, priority values — all of it lives in the template's configuration block. Change the template, and the skill adapts. This means the same skill works across different projects with different JIRA configurations.
-
-**Reference tracking with a simple CLI.** References are registered in a `references.json` file and managed through `ref_manager.py`. This gives you a persistent index of all data sources — local files and Confluence pages — that the agent consults when drafting stories. The CLI is intentionally simple: init, add, remove, list.
-
-**Graceful degradation.** Every operation has a fallback. No MCP? The skill still creates stories from local files and saves them as markdown. No Confluence? Add the page manually as a local file. The skill never blocks on missing infrastructure.
+**Graceful degradation.** Every operation has a fallback. No MCP? Stories are created from local files and saved as markdown. No Confluence? Add the page manually as a local file. The skill never blocks on missing infrastructure.
 
 ### The Template
 
@@ -197,35 +182,11 @@ This is plain English, not a rigid schema. The agent reads it, understands the m
 {{/acceptance_criteria}}
 ```
 
-Optional sections are wrapped in `{{#section}}...{{/section}}` blocks. If the story doesn't need a section, the agent removes the entire block. This keeps templates comprehensive without forcing every story to include every field.
+Optional sections are wrapped in `{{#section}}...{{/section}}` blocks. If the story doesn't need a section, the agent removes the entire block.
 
-### The Reference Manager
+### The SKILL.md
 
-`ref_manager.py` is a small Python CLI (~430 lines) that manages the reference index. It handles:
-
-| Command | What it does |
-|---------|-------------|
-| `init <project-key>` | Creates the `user-stories/` directory with `references.json`, `refs/`, and `stories/` subfolders |
-| `add <type> <path\|url> "<title>"` | Registers a local file or Confluence URL as a reference |
-| `list` | Shows all registered references |
-| `mark-downloaded <id> <path>` | Updates a Confluence reference after local download |
-| `list-stories` | Lists all local story drafts |
-
-The agent calls these commands through Bash, then uses the Read tool to access the referenced content. For Confluence references, it fetches the page through MCP and saves a local copy for offline use.
-
-**Why a separate CLI?** The agent could track references in memory, but a persistent file means references survive across sessions. You add your references once, and they're available every time you create a story.
-
-### The SKILL.md — Agent Instructions
-
-The `SKILL.md` file is the brain of the skill. It tells the agent:
-
-1. **What tools are available** — the reference manager CLI, MCP tools (if present)
-2. **How to handle each operation** — step-by-step instructions for init, add-ref, create, update
-3. **How to gather context** — read all references, explore the codebase, synthesize before writing
-4. **How to fill the template** — parse the config block, apply defaults, replace placeholders
-5. **How to push to JIRA** — map fields using the template's configuration, handle custom fields
-
-The key instruction for story creation (simplified):
+The SKILL.md tells the agent how to handle each operation step by step:
 
 ```
 1. Read the template — parse config block and body structure
@@ -237,49 +198,7 @@ The key instruction for story creation (simplified):
 7. Save or push — local markdown, JIRA, or both
 ```
 
-Notice step 3: **read every reference**. The agent doesn't just look at one source — it reads all registered references, explores relevant parts of the codebase, and synthesizes everything before writing. This is what produces stories that reflect your actual project context rather than generic filler.
-
----
-
-## Using the Skill
-
-### Setup
-
-```bash
-# Initialize the data directory
-python user-stories/code/ref_manager.py init PROJ --jira-url https://your-org.atlassian.net
-
-# Add local references
-python user-stories/code/ref_manager.py add local-md docs/requirements.md "Requirements" "Product requirements"
-
-# Add a Confluence reference
-python user-stories/code/ref_manager.py add confluence "https://org.atlassian.net/wiki/spaces/PROJ/pages/123" "Design Spec"
-```
-
-### Creating a Story
-
-Once references are registered, you talk to the agent:
-
-> "Create a user story for the login feature based on our references"
-
-The agent will:
-1. Read all registered references
-2. Explore the codebase for relevant code
-3. Fill in the template with synthesized context
-4. Show you a draft for review
-5. Ask whether to save locally or push to JIRA
-
-### With and Without MCP
-
-| Operation | With MCP | Without MCP |
-|-----------|----------|-------------|
-| Add local references | Full | Full |
-| Add Confluence references | Fetches title automatically | Ask user for title |
-| Download Confluence content | Fetches and saves locally | Manual download needed |
-| Create story | Save locally or push to JIRA | Save locally only |
-| Update JIRA story | Fetches, updates, and saves | Local draft only |
-
-The skill never fails because MCP is missing — it just offers less automation.
+The key is step 3: **read every reference**. The agent reads all registered references, explores relevant code, and synthesizes everything before writing. This produces stories that reflect your actual project — not generic filler.
 
 ### Example Prompts
 
@@ -294,6 +213,96 @@ The skill never fails because MCP is missing — it just offers less automation.
 
 "Update PROJ-42 — add error handling to acceptance criteria"
 ```
+
+---
+
+## Simplicity Is Power — The KISS Version
+
+The full skill works. It's well-structured, it follows every best practice from Chapter 7, and it's a solid academic example of skill design. But do you actually need all of it?
+
+Let's look at what the skill has and ask a brutal question for each piece:
+
+| Component | What it does | Do you need it? |
+|-----------|-------------|-----------------|
+| `SKILL.md` | Agent instructions | A scoped `CLAUDE.md` does the same thing |
+| `ref_manager.py` (~430 lines) | Tracks references in JSON | A bullet list in CLAUDE.md works just as well |
+| `references.json` | Persistent reference index | The bullet list *is* persistent — it's a file |
+| Slash command invocation | `/user-stories` trigger | You can just say "create a user story" |
+| Template | Story structure + JIRA config | Yes — you need this either way |
+
+The Python CLI is the main overhead. It manages references — but you could replace it with a section in your CLAUDE.md that says "read these files before creating a story" followed by a list. The agent already knows how to read files, search Confluence via MCP, and explore the codebase. You don't need a CLI to tell it where to look.
+
+**The minimal version is three files:**
+
+```
+user-stories/
+├── CLAUDE.md          # rules, references, JIRA config, MCP usage
+├── template.md        # story template (same as the full skill)
+└── stories/           # output folder
+```
+
+No Python. No JSON. No CLI. The `CLAUDE.md` carries all the instructions — the agent reads it automatically because it's a scoped instruction file (Chapter 6). The template stays exactly the same. Stories go into `stories/`.
+
+### The CLAUDE.md
+
+This single file replaces the SKILL.md, the reference manager, and the references.json. It tells the agent everything: how to create stories, where to find references, how to use MCP, and how to push to JIRA.
+
+Here's an example (also available at [`user-stories-simple/CLAUDE.md`](./user-stories-simple/CLAUDE.md)):
+
+```markdown
+# User Story Creation
+
+## How to create a story
+
+1. Read `template.md` — understand the config block and the body structure
+2. Read all references listed below
+3. Explore the codebase for relevant context (Glob, Grep, Read)
+4. If Atlassian MCP is available (tools with `mcp__mcp-atlassian__` prefix),
+   fetch any Confluence references listed below
+5. Fill in the template — apply defaults from the config block,
+   replace placeholders with synthesized content
+6. Show the draft to the user, ask for approval
+7. Save to `stories/<slug>.md`
+8. Ask: "Push to JIRA or keep as local draft?"
+   - If JIRA push: use MCP tools to create the issue,
+     map fields per the template config block
+   - If no MCP: save locally and tell the user
+
+## References
+
+Read these before creating any story:
+
+- `docs/requirements.md` — Product requirements
+- `docs/api-design.md` — API design specification
+- Confluence: https://org.atlassian.net/wiki/spaces/PROJ/pages/123 — Architecture decisions
+
+## Project defaults
+
+- Project key: PROJ
+- Default epic: PROJ-42
+- JIRA URL: https://your-org.atlassian.net
+```
+
+To add a reference, you add a line to the list. To change defaults, you edit the file. That's the entire management workflow.
+
+### Why This Is Enough
+
+The agent doesn't need a Python CLI to know which files to read — you can just tell it in plain English. It doesn't need `references.json` to track references — a bullet list in CLAUDE.md survives across sessions just as well. And since CLAUDE.md is a scoped instruction file, the agent picks it up automatically when the folder is in scope.
+
+The MCP integration works identically. The CLAUDE.md tells the agent to check for Atlassian MCP tools and use them if available. The template's configuration block tells it how to map fields to JIRA. Nothing about the MCP workflow requires a Python CLI or a formal skill.
+
+**Start here.** If you later find yourself wanting slash command invocation, programmatic reference management, or CI integration — the full skill is in `user-stories/` and the upgrade path is smooth. The template and MCP config stay the same. But most teams never need to upgrade. The simple version just works.
+
+### Full Skill vs. KISS — When to Choose What
+
+| Situation | Use the simple approach | Use the full skill |
+|-----------|------------------------|-------------------|
+| Solo developer or small team | Yes | Overkill |
+| Handful of stable references | Yes | Overkill |
+| Team wants slash command invocation | No | Yes |
+| Dozens of references that change often | No | Yes |
+| CI/CD integration for story generation | No | Yes |
+| You want to learn skill design patterns | Both — build the full one, then simplify |
 
 ---
 
@@ -496,7 +505,8 @@ This chapter showed a pattern that extends well beyond user stories:
 2. **Your instruction files are already a data source.** `CLAUDE.md`, `AGENTS.md`, and scoped configs already describe your project architecture. The agent starts with more context than you think.
 3. **External data needs a bridge.** MCP servers connect the agent to systems like JIRA and Confluence. Design for graceful degradation — the skill should work without the bridge, just with less automation.
 4. **Templates carry the configuration.** Put project-specific details (JIRA field mappings, custom fields, defaults) in the template, not the skill code. One skill serves multiple projects — just swap the template.
-5. **Separate config from logic, use plain English, persist state in files.** These skill-building best practices keep skills readable, portable, and reliable across sessions and team members.
+5. **Simplicity is power.** A folder, a CLAUDE.md, and a template can replace hundreds of lines of Python. Start with the minimum that works. Add structure only when the simple version breaks down.
+6. **Separate config from logic, use plain English, persist state in files.** When you do build a full skill, these best practices keep it readable, portable, and reliable across sessions and team members.
 6. **MCP servers are force multipliers.** Once configured, the Atlassian MCP isn't just for story creation — it's available for any task that touches JIRA or Confluence. Sprint reports, bulk updates, pulling docs into context. One setup, many use cases.
 7. **Know where the seams are.** Large Confluence pages eat context tokens. JIRA formatting breaks on complex content like tables. MCP may not be available in every environment. Design around these limits — download and trim, generate locally then copy-paste, degrade gracefully.
 
@@ -512,7 +522,8 @@ After that, we'll apply the same patterns to more tasks: UI testing, integration
 
 ## Resources
 
-- [User Story Skill — Complete Implementation](./user-stories/) — The full skill with SKILL.md, templates, reference manager, and usage guide
+- [User Story Skill — Full Implementation](./user-stories/) — The complete skill with SKILL.md, templates, reference manager, and usage guide
+- [User Story Skill — Simple Version](./user-stories-simple/) — The KISS version: just a CLAUDE.md, a template, and a stories folder
 - [Model Context Protocol (MCP)](https://modelcontextprotocol.io) — Official MCP specification and documentation
 - [mcp-atlassian](https://github.com/sooperset/mcp-atlassian) — Open-source Atlassian MCP server for JIRA and Confluence
 - [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens) — Generate API tokens for Atlassian Cloud authentication
