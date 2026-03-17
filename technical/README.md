@@ -35,3 +35,4 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 |---|---------|-------------------|------|
 | 10 | External Tools & Data (MCP) | Deep dive into MCP — configure servers, build your own, connect agents to external systems | Coming soon |
 | 11 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |
+| 12 | Spec-Driven Development | Drive entire features from specs using agents | Coming soon |
