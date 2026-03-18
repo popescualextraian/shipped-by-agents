@@ -85,6 +85,16 @@ ignore_rules:
 
 You can customize ignore rules and other settings here. For personal overrides you don't want committed to git, create a `.serena/project.local.yml` — it takes precedence over `project.yml`.
 
+### Step 4: Tell your agent to use Serena
+
+Installing Serena makes the tools available, but your agent won't automatically prefer them over its built-in tools. Claude Code will still default to Grep and Read unless you nudge it. Add a line to your project's `CLAUDE.md`:
+
+```markdown
+When exploring code structure, finding symbol definitions, or looking up references, prefer Serena's MCP tools (find_symbol, find_referencing_symbols, get_symbols_overview, rename_symbol) over Grep/Read for better precision.
+```
+
+Without this, the agent will use what it already knows — and you'll wonder why you installed Serena at all.
+
 ### One Server Per Project
 
 Serena is **stateful**. It indexes your project's symbols and keeps that state in memory. This means:
