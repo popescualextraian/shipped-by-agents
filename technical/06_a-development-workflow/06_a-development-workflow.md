@@ -71,8 +71,9 @@ If you're on Windows, do these before installing:
 2. **Install Git for Windows** — Claude Code requires it. Get it from [git-scm.com](https://git-scm.com/) or run `winget install Git.Git`.
 3. **Install Node.js (LTS)** — Required for npm packages (many agents and tools install via npm). Get it from [nodejs.org](https://nodejs.org/) or run `winget install OpenJS.NodeJS.LTS`.
 4. **Install Python 3.12+** — Useful for running scripts, data processing, and many development tools. Get it from [python.org](https://www.python.org/) or run `winget install Python.Python.3.12`.
-5. **Install Docker Desktop** — Needed for containerized workflows, local databases, and reproducible environments. Get it from [docker.com](https://www.docker.com/products/docker-desktop/) or run `winget install Docker.DockerDesktop`.
-6. **Use Windows Terminal** — Much better than the default cmd.exe. Install from the Microsoft Store if you don't have it.
+5. **Install uv** — A fast Python package manager that replaces pip and virtualenv. Many MCP servers and tools install via `uvx`. Get it from [docs.astral.sh/uv](https://docs.astral.sh/uv/) or run `winget install astral-sh.uv`.
+6. **Install Docker Desktop** — Needed for containerized workflows, local databases, and reproducible environments. Get it from [docker.com](https://www.docker.com/products/docker-desktop/) or run `winget install Docker.DockerDesktop`.
+7. **Use Windows Terminal** — Much better than the default cmd.exe. Install from the Microsoft Store if you don't have it.
 7. **Run as administrator** for the initial install, then use a normal terminal after that.
 
 ### Why the CLI, Not the IDE Chat?
