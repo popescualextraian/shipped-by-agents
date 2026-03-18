@@ -42,3 +42,4 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 | 16 | External Tools & Data (MCP) | Deep dive into MCP — configure servers, build your own, connect agents to external systems | Coming soon |
 | 17 | Architecture & Design | Agent-assisted architecture decisions, system design, ADRs, design patterns | Coming soon |
 | 18 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |
+| 19 | Onboarding New Team Members | Use AI agents to accelerate developer onboarding on your project | Coming soon |

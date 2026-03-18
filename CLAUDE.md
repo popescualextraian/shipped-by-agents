@@ -37,6 +37,7 @@ Training documentation for developers and teams looking to understand, adopt, an
 | 16 | Integration with external tools and data | TBD | Pending |
 | 17 | Architecture & Design | TBD | Pending |
 | 18 | Practical workflow examples and productivity tips | TBD | Pending |
+| 19 | Onboarding new team members with AI agents | TBD | Pending |
 
 ## Conventions
 
