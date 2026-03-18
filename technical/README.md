@@ -28,11 +28,17 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 | 7 | [Reusable Prompts, Skills & Agents](07_skills-and-agents/07_skills-and-agents.md) | Create custom skills and agents — hands-on with a REST Assured test agent | 45 min |
 | 8 | [Multi-Agent Workflows](08_workflows/08_workflows.md) | Orchestrate multi-step workflows with state management and human-in-the-loop | 45 min |
 | 9 | [Automating User Story Creation](09_story-creation/09_story-creation.md) | Apply skill-building to non-coding tasks — user stories, MCP integration, Atlassian connectivity | 30 min |
+| 10 | Testing with AI Agents | Integration tests, UI/Playwright tests, API testing, test data generation, TDD patterns | Coming soon |
+| 11 | Debugging & Troubleshooting | Agent-driven debugging, external log integration, root cause analysis, reproducing issues | Coming soon |
+| 12 | Code Review & Refactoring | PR reviews, legacy code refactoring, migrations, dependency upgrades | Coming soon |
+| 13 | DevOps & CI/CD | Agents in pipelines, automated checks, database migrations, deployment assistance | Coming soon |
+| 14 | Spec-Driven Development | Drive entire features from specs — the capstone that ties everything together | Coming soon |
 
 ### Mastery
 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
-| 10 | External Tools & Data (MCP) | Deep dive into MCP — configure servers, build your own, connect agents to external systems | Coming soon |
-| 11 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |
-| 12 | Spec-Driven Development | Drive entire features from specs using agents | Coming soon |
+| 15 | [Power-Ups](15_power-ups/) | Focused guides on tools and enhancements that level up your agent workflow | Varies |
+| 16 | External Tools & Data (MCP) | Deep dive into MCP — configure servers, build your own, connect agents to external systems | Coming soon |
+| 17 | Architecture & Design | Agent-assisted architecture decisions, system design, ADRs, design patterns | Coming soon |
+| 18 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |
