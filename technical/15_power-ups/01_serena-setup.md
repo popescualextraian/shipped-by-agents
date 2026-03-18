@@ -175,7 +175,7 @@ You should see the agent call `find_symbol` or `find_referencing_symbols` instea
 
 Serena comes with a local web dashboard at `http://127.0.0.1:24282/dashboard/index.html`. It starts automatically with the MCP server — no extra setup needed.
 
-<img src="./serena-dashboard.png![img.png](img.png)" width="100%"/>
+<img src="./serena-dashboard.png" width="100%"/>
 
 The dashboard shows you at a glance: which project is active, which language is configured, what context and modes are running, and how many tools are available. You can also see tool usage stats, the execution queue, and the last execution status — useful for confirming the language server initialized successfully. It's a quick way to verify your setup without going through the agent.
 
