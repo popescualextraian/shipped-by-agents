@@ -465,3 +465,83 @@ The feedback loop is the same as UI testing: fail → read error → fix → ret
 The REST API testing skill from [Chapter 7](../07_skills-and-agents/07_skills-and-agents.md) is a concrete implementation of this pattern using Hurl files — declarative, lightweight HTTP tests that agents generate naturally. Teams that prefer a minimal, code-free approach to API testing can adopt that skill directly. It pairs well with the OpenAPI → MCP approach from Section 2: the agent reads the spec for understanding, then produces Hurl files instead of framework-specific test code.
 
 ---
+
+## The Power Combo: Testing + Logging
+
+Testing tells the agent "it failed." Logging tells the agent "it failed **and here's why**." Put them together, and the agent can find a bug, diagnose its root cause, fix the code, and verify the fix — all without asking you a single question.
+
+This is what makes autonomous debugging loops possible. Without logs, a failing test gives the agent a symptom. With logs, the agent gets the full diagnosis. This section bridges testing (this chapter) with debugging (Chapter 11).
+
+### Two Workflows, One Big Difference
+
+**Without logging — you relay errors (L2):**
+
+```
+Agent runs tests → Fails → You read the error
+  → You copy-paste server logs to agent → Agent guesses → Maybe fixes
+```
+
+You are the bottleneck. Every failure requires you to context-switch, read output, and ferry information back to the agent. The agent waits while you play messenger.
+
+**With logging — autonomous loop (L4):**
+
+```
+Agent runs tests → Fails → Agent reads app logs automatically
+  → Agent finds stack trace → Diagnoses root cause → Fixes → Re-runs → Pass
+```
+
+The agent closes the loop itself. It reads the test failure, checks the application logs, correlates the error, fixes the source code, and re-runs the test. You review the commit, not the process.
+
+### Setting It Up
+
+Three steps to unlock the autonomous loop.
+
+**1. Give the agent access to logs.**
+
+The simplest approach: your app logs to stdout or a file, and the agent reads it with `tail` or `cat`.
+
+- **File-based:** app writes to `logs/app.log`, agent reads with `tail -n 50 logs/app.log`
+- **Docker:** agent runs `docker logs <container> --tail 50`
+- **Advanced:** connect a log aggregator MCP server so the agent can query structured logs directly
+
+The key requirement is that the agent can read logs without your help.
+
+**2. Create a combined instruction.**
+
+Add this to your `CLAUDE.md` or `.github/copilot-instructions.md`:
+
+```markdown
+When a test fails:
+1. Read the last 50 lines of the application log
+2. Look for errors, stack traces, or warnings near the failure timestamp
+3. Diagnose the root cause
+4. Fix the code (not the test, unless the test is wrong)
+5. Re-run the failing test to confirm the fix
+```
+
+This instruction turns a test failure from a dead end into a starting point. The agent knows what to do next without asking.
+
+**3. See it in action — a worked example.**
+
+You ask the agent to run the Playwright tests for your form submission flow. The agent runs them:
+
+- **Test fails:** the submit button click doesn't produce the expected confirmation message. Playwright reports a timeout waiting for the `"Thank you"` text.
+- **Agent reads the server log** (`logs/app.log`) and finds: `POST /api/submit returned 500 — TypeError: Cannot read property 'email' of undefined`
+- **Agent opens the backend handler** (`routes/submit.js`). The route reads `req.body.email`, but the middleware that parses the request body was never registered for this route.
+- **Agent adds the missing middleware**, saves the file.
+- **Agent re-runs the failing test.** The form submits, the confirmation message appears. Test passes.
+
+Total time: under a minute. You didn't copy a single error message.
+
+> This is the difference between L2 and L4 maturity in practice. Instead of you being the messenger between the test output and the agent, the agent closes the loop itself. It's one of the most impactful workflow upgrades a team can adopt.
+
+### Going Deeper
+
+This section gives you everything you need to start using the testing + logging combo today. For more advanced strategies:
+
+- **Chapter 11 (Debugging & Troubleshooting)** covers deeper log collection techniques, structured logging, and how agents navigate complex multi-service failures.
+- **Chapter 15 (Power-Ups)** covers observability MCP servers that give agents direct access to log aggregators and monitoring tools.
+
+You don't need those chapters to use what you learned here. Start with file-based logs and the five-step instruction above — that alone eliminates most of the back-and-forth in your debugging workflow.
+
+---
