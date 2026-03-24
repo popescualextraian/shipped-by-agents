@@ -249,3 +249,92 @@ The feedback loop (fail → re-explore → regenerate) is where agents shine. A 
 **Store tests alongside the code they test.** Put `checkout.spec.ts` next to your checkout component, not in a distant `tests/` folder. When the agent modifies a component, it sees the related tests in the same context window.
 
 ---
+
+## When You Have No API Tests
+
+Same situation as Section 1, but for APIs. Your agent just built or modified REST endpoints and you need to validate they work. No test suite exists yet. Several strategies can help, from lightweight throwaway scripts to reusable MCP-based approaches.
+
+### Strategies for Ad-Hoc API Validation
+
+| Approach | How It Works | Agent-Friendly? | Repeatable? |
+|----------|-------------|-----------------|-------------|
+| **OpenAPI → MCP Server** | Generate an MCP server from your OpenAPI/Swagger spec. The agent calls your API as native tools. | Highest | Semi — MCP server is reusable |
+| **Inline code** (fetch/requests/curl) | Agent writes quick scripts to hit endpoints and check responses. | High | No — throwaway |
+| **Postman + MCP** | Agent connects to a Postman workspace, runs saved requests. | Medium | Yes — collections persist |
+
+The OpenAPI → MCP approach deserves special attention. It turns your API spec into something the agent can interact with natively — no manual curl commands, no copy-pasting URLs.
+
+### Worked Example: OpenAPI → MCP
+
+If you have an OpenAPI spec, you can auto-generate an MCP server that exposes each endpoint as a tool. The agent then calls your API the same way it calls any other MCP tool — with structured inputs and typed responses.
+
+Here is the flow using `openapi-mcp-generator`:
+
+**1. Start with your OpenAPI spec** (e.g., `openapi.yaml`)
+
+**2. Generate the MCP server:**
+
+```bash
+npx openapi-mcp-generator --spec openapi.yaml --output ./api-mcp-server
+```
+
+This reads your spec and produces a Node.js MCP server with one tool per endpoint.
+
+**3. Configure in Claude Code:**
+
+```bash
+claude mcp add my-api -- node ./api-mcp-server/index.js
+```
+
+**4. Configure in Copilot** (use the dual-config pattern from Chapter 15):
+
+```json
+{
+  "servers": {
+    "my-api": {
+      "command": "node",
+      "args": ["./api-mcp-server/index.js"],
+      "transportType": "stdio"
+    }
+  }
+}
+```
+
+**5. Agent calls endpoints as MCP tools.** It sends a request, reads the response, and validates status codes and payloads — all within the conversation.
+
+**Alternatives worth knowing:**
+
+- **AWS OpenAPI MCP Server** — creates tools from your endpoints at runtime. No code generation step needed. You point it at a spec URL and it builds tools on the fly.
+- **FastMCP** (Python) — `FastMCP.from_openapi(url)` is a one-liner for Python teams. Minimal setup, good for quick validation.
+
+### Challenges
+
+| Challenge | What to Watch For | Mitigation |
+|-----------|------------------|------------|
+| **Authentication** | Tokens, API keys, OAuth flows | Pass via env vars or MCP server config. NEVER hardcode in prompts or MCP configs committed to git. |
+| **Stateful APIs** | Create → Read → Update → Delete chains | Agent must sequence calls correctly. Prompt it with the expected order. |
+| **Environment isolation** | Dev vs staging vs prod | Configure base URL per environment. Warn about prod side effects. |
+| **Data setup/teardown** | Tests need seed data, cleanup after | Use factory endpoints or setup scripts. Agent should clean up what it creates. |
+| **Rate limiting** | Agent may hammer endpoints rapidly | Add rate-limit awareness in agent instructions (e.g., "wait 1s between calls"). |
+
+**Passing credentials safely.** Use environment variables in your MCP server config — never inline secrets:
+
+```json
+{
+  "servers": {
+    "my-api": {
+      "command": "node",
+      "args": ["./api-mcp-server/index.js"],
+      "env": {
+        "API_BASE_URL": "http://localhost:3000",
+        "API_KEY": "${MY_API_KEY}"
+      },
+      "transportType": "stdio"
+    }
+  }
+}
+```
+
+Set `MY_API_KEY` in your shell environment or `.env` file (which should be in `.gitignore`). The MCP config references the variable — the secret never touches version control.
+
+---
