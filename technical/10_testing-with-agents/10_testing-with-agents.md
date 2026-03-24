@@ -338,3 +338,130 @@ claude mcp add my-api -- node ./api-mcp-server/index.js
 Set `MY_API_KEY` in your shell environment or `.env` file (which should be in `.gitignore`). The MCP config references the variable — the secret never touches version control.
 
 ---
+
+## When You Have (or Want) API Tests
+
+Your team has an existing API test suite — or plans to build one. The agent writes, runs, and maintains tests in your chosen framework. This mirrors the UI testing workflow from Section 2, but for APIs: the agent understands your endpoints (via specs or MCP), generates test code, runs it, and fixes failures.
+
+### Tool Landscape
+
+| Your Stack | MCP Integration | What the Agent Does |
+|------------|----------------|-------------------|
+| **Playwright API tests** | Playwright MCP | Generates `request` context tests in `.spec.ts` |
+| **Postman** | Postman MCP Server | Creates/updates collections, test scripts, runs via Newman |
+| **pytest + requests** | OpenAPI MCP (for understanding) | Generates Python test functions |
+| **Jest + supertest** | OpenAPI MCP (for understanding) | Generates JS test files |
+
+### Worked Example: Postman MCP
+
+Many teams already use Postman for API testing. The Postman MCP Server lets your agent interact directly with your Postman workspace — reading existing collections, creating new requests, writing test scripts, and running everything through Newman.
+
+**Setup: Claude Code**
+
+```bash
+claude mcp add postman \
+  -e POSTMAN_API_KEY=your-api-key \
+  -- npx @postmanlabs/postman-mcp-server@latest
+```
+
+**Setup: GitHub Copilot**
+
+Config file location depends on your environment:
+
+| Environment | Config file |
+|-------------|------------|
+| **VS Code** | `.vscode/mcp.json` (workspace) |
+| **IntelliJ / JetBrains** | `.vscode/mcp.json` (same path, cross-IDE compat) |
+| **Copilot CLI** | `~/.copilot/mcp-config.json` (global) |
+
+```json
+{
+  "servers": {
+    "postman": {
+      "command": "npx",
+      "args": ["@postmanlabs/postman-mcp-server@latest"],
+      "env": {
+        "POSTMAN_API_KEY": "${POSTMAN_API_KEY}"
+      },
+      "transportType": "stdio"
+    }
+  }
+}
+```
+
+**The walkthrough**
+
+You built a new `/orders` API with three endpoints: create, get by ID, and list. Your Postman workspace already has collections for `/users` and `/products`, but nothing for orders.
+
+**You:** "Connect to my Postman workspace. See what's already tested, then add tests for the new orders endpoints."
+
+The agent gets to work:
+
+```
+Agent: [connects to Postman workspace via MCP]
+       Found workspace "ecommerce-api" with 2 collections:
+       - Users API (12 requests, all with test scripts)
+       - Products API (8 requests, all with test scripts)
+
+Agent: [reads existing collections to understand patterns]
+       Your team uses: status code checks, response time assertions,
+       JSON schema validation, and environment variables for base URL.
+
+Agent: [creates new collection "Orders API"]
+       Adding request: POST /orders — creates an order
+       Adding test script: checks 201 status, validates response schema,
+       stores order ID in collection variable.
+
+Agent: [adds GET /orders/:id request]
+       Test script: checks 200 status, validates order fields match
+       what was created, uses stored order ID from previous request.
+
+Agent: [adds GET /orders request]
+       Test script: checks 200 status, validates array response,
+       confirms created order appears in list.
+
+Agent: [runs collection via Newman CLI]
+       ✓ POST /orders — 201 Created (142ms)
+       ✓ GET /orders/:id — 200 OK (89ms)
+       ✗ GET /orders — 200 OK but schema validation failed:
+         "totalCount" field is integer, test expected string.
+
+Agent: [fixes the test script to expect integer for totalCount]
+       [re-runs collection]
+       ✓ All 3 requests passing. Collection saved to workspace.
+```
+
+**Agent:** "Done. Created an 'Orders API' collection with 3 requests and test scripts. All tests pass. The collection follows your team's existing patterns — schema validation, environment variables, response time checks. I fixed one schema mismatch in the list endpoint test (totalCount is an integer, not a string)."
+
+The key insight: the agent read your existing collections first. It didn't invent a testing style — it matched what your team already does.
+
+> **Note:** Postman is freemium. The free tier is limited to 1 user and 25 collection runs/month (as of March 2026). Teams will likely need a paid plan ($19+/user/month). The Postman MCP Server code itself is open source, but requires a Postman account and API key.
+
+### The Understand → Generate Workflow
+
+Whether you use Postman, pytest, Jest, or Playwright's API testing, the agent follows the same loop:
+
+```mermaid
+flowchart LR
+    A[Agent reads\nAPI spec / MCP] --> B[Understands\nendpoints]
+    B --> C[Generates test code\nin team's framework]
+    C --> D[Runs tests]
+    D -->|Pass| E[Commit]
+    D -->|Fail| F[Reads error →\nfixes code or test]
+    F --> C
+
+    style A fill:#0A2540,color:#fff
+    style B fill:#0A2540,color:#fff
+    style C fill:#0A2540,color:#fff
+    style D fill:#0A2540,color:#fff
+    style E fill:#00BFA5,color:#fff
+    style F fill:#E8722A,color:#fff
+```
+
+The feedback loop is the same as UI testing: fail → read error → fix → retry. The difference is speed. API tests run in milliseconds, so the agent iterates faster. A typical generate-run-fix cycle completes in under a minute.
+
+### Cross-Reference: REST API Testing Skill (Chapter 7)
+
+The REST API testing skill from [Chapter 7](../07_skills-and-agents/07_skills-and-agents.md) is a concrete implementation of this pattern using Hurl files — declarative, lightweight HTTP tests that agents generate naturally. Teams that prefer a minimal, code-free approach to API testing can adopt that skill directly. It pairs well with the OpenAPI → MCP approach from Section 2: the agent reads the spec for understanding, then produces Hurl files instead of framework-specific test code.
+
+---
