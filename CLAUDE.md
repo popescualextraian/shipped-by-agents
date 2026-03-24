@@ -33,7 +33,7 @@ Training documentation for developers and teams looking to understand, adopt, an
 | 12 | Code Review & Refactoring | TBD | Pending |
 | 13 | DevOps & CI/CD | TBD | Pending |
 | 14 | Spec-Driven Development | TBD | Pending |
-| 15 | Power-Ups: tools and enhancements for your agent workflow | Varies | In Progress |
+| 15 | Power-Ups: tools and enhancements for your agent workflow (MCP overview, Serena) | Varies | In Progress |
 | 16 | Integration with external tools and data | TBD | Pending |
 | 17 | Architecture & Design | TBD | Pending |
 | 18 | Practical workflow examples and productivity tips | TBD | Pending |

@@ -237,6 +237,59 @@ The instruction file is project infrastructure — like your CI config or linter
 
 > **Tip:** Run `/init` periodically on mature projects. Compare the output with your current `CLAUDE.md`. You might discover gaps.
 
+### Audit Your Instruction Files with a Plugin
+
+Running `/init` tells you what the agent *would* generate from scratch. But it doesn't tell you what's *wrong* with your existing file — stale commands, missing sections, outdated architecture descriptions.
+
+Both Claude Code and Copilot CLI have plugins that help with this — though they work differently.
+
+**Claude Code — CLAUDE.md Improver:**
+
+```bash
+# Install it once
+/plugin claude-md-management
+
+# Reload to activate
+/reload-plugins
+
+# Run the audit
+/claude-md-improver
+```
+
+The plugin scans every `CLAUDE.md` file in your repo, scores each one against a quality rubric, and outputs a report:
+
+| Criterion | What it checks |
+|-----------|---------------|
+| **Commands/workflows** | Are build, test, and deploy commands documented? |
+| **Architecture clarity** | Can the agent understand your codebase structure? |
+| **Non-obvious patterns** | Are gotchas and quirks captured? |
+| **Conciseness** | Is it dense and useful, not verbose and obvious? |
+| **Currency** | Does it reflect the current state of the code? |
+| **Actionability** | Are instructions copy-paste ready? |
+
+Each file gets a letter grade (A through F) with specific issues and recommended fixes. You review the suggestions, approve what makes sense, and the plugin applies the changes.
+
+**Copilot CLI — awesome-copilot plugin:**
+
+```bash
+# Install it
+copilot plugin install awesome-copilot@awesome-copilot
+
+# Suggest missing instructions for your repo
+/awesome-copilot:suggest-awesome-github-copilot-instructions
+```
+
+This plugin takes a different approach. Instead of scoring your existing file, it analyzes your repo and suggests instruction files from a curated community library. It also flags instructions you already have that may be outdated. It won't give you a quality score — but it will surface gaps you didn't know about.
+
+> **Note:** The Copilot ecosystem doesn't yet have a structured auditor that scores instruction file quality the way the CLAUDE.md Improver does. If you want a deeper review, you can prompt Copilot directly: `@workspace Review and suggest improvements for our copilot-instructions.md` — but that's an ad-hoc check, not a repeatable audit.
+
+**When to run these:**
+- After a major feature lands — new patterns and conventions may need documenting
+- When onboarding a new team member — gaps become obvious when fresh eyes hit the project
+- Quarterly, as a hygiene check — instruction files drift just like documentation
+
+This is not a replacement for the habit of updating your instruction file after every task. It's a periodic deep clean — like running a linter on your project context instead of your code.
+
 > **Note:** This section covered what goes *inside* a single instruction file. As your project grows, one file won't be enough. You'll need scoped rule files that load only when the agent works on specific parts of the codebase, multiple markdown files for different domains, and strategies for keeping them organized. We cover structuring and scaling your instruction files in a later chapter.
 
 ---

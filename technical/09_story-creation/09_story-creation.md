@@ -514,7 +514,7 @@ This chapter showed a pattern that extends well beyond user stories:
 
 ## What's Next
 
-This skill lightly touched MCP — the Atlassian connector that lets the agent read Confluence and push to JIRA. In the next chapter, we'll go deeper: what MCP is, how it works, how to configure servers, and how to build your own. MCP is the bridge between your agent and the rest of your toolchain — CI/CD, databases, monitoring, communication platforms.
+This skill lightly touched MCP — the Atlassian connector that lets the agent read Confluence and push to JIRA. If you want to go deeper — what MCP is, how the protocol works, how to find and configure servers for GitHub, AWS, Azure, databases, and more — head to [Chapter 15: MCP — Connecting Your Agent to Everything](../15_power-ups/02_mcp-overview.md).
 
 After that, we'll apply the same patterns to more tasks: UI testing, integration tests, log gathering. The skill-building techniques are the same. The templates change. The MCP servers change. But the approach stays consistent.
 
@@ -529,3 +529,4 @@ After that, we'll apply the same patterns to more tasks: UI testing, integration
 - [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens) — Generate API tokens for Atlassian Cloud authentication
 - [Chapter 7: Creating Reusable Skills and Simple Agents](../07_skills-and-agents/07_skills-and-agents.md) — Skill-building foundations this chapter builds on
 - [Chapter 8: Multi-Agent Workflows](../08_workflows/08_workflows.md) — Workflow orchestration patterns
+- [Chapter 15: MCP — Connecting Your Agent to Everything](../15_power-ups/02_mcp-overview.md) — MCP fundamentals, server catalog, and setup guide

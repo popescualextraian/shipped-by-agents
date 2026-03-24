@@ -29,7 +29,8 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 | 8 | [Multi-Agent Workflows](08_workflows/08_workflows.md) | Orchestrate multi-step workflows with state management and human-in-the-loop | 45 min |
 | 9 | [Automating User Story Creation](09_story-creation/09_story-creation.md) | Apply skill-building to non-coding tasks — user stories, MCP integration, Atlassian connectivity | 30 min |
 | 10 | Testing with AI Agents | Integration tests, UI/Playwright tests, API testing, test data generation, TDD patterns | Coming soon |
-| 11 | Debugging & Troubleshooting | Agent-driven debugging, external log integration, root cause analysis, reproducing issues | Coming soon |
+| 11 | [Debugging & Troubleshooting](11_debugging/) | Agent-driven debugging, external log integration, root cause analysis, reproducing issues | In progress |
+| 11.1 | [Integrating Remote Log Analysis](11_debugging/01_log-analysis-integration.md) | Connect your agent to CloudWatch, Datadog, Splunk, Grafana, and more via MCP | 25 min |
 | 12 | Code Review & Refactoring | PR reviews, legacy code refactoring, migrations, dependency upgrades | Coming soon |
 | 13 | DevOps & CI/CD | Agents in pipelines, automated checks, database migrations, deployment assistance | Coming soon |
 | 14 | Spec-Driven Development | Drive entire features from specs — the capstone that ties everything together | Coming soon |
@@ -39,7 +40,9 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 | # | Chapter | What you'll learn | Time |
 |---|---------|-------------------|------|
 | 15 | [Power-Ups](15_power-ups/) | Focused guides on tools and enhancements that level up your agent workflow | Varies |
-| 16 | External Tools & Data (MCP) | Deep dive into MCP — configure servers, build your own, connect agents to external systems | Coming soon |
+| 15.1 | [Serena: Giving Your Agent a Developer's Eyes](15_power-ups/01_serena-setup.md) | LSP-powered code intelligence — setup for Python, Java, and enterprise Docker | 20 min |
+| 15.2 | [MCP: Connecting Your Agent to Everything](15_power-ups/02_mcp-overview.md) | MCP fundamentals, server catalog (GitHub, Atlassian, AWS, Azure, databases), setup and security | 30 min |
+| 16 | External Tools & Data | Advanced integration patterns — building custom MCP servers, connecting agents to external systems | Coming soon |
 | 17 | Architecture & Design | Agent-assisted architecture decisions, system design, ADRs, design patterns | Coming soon |
 | 18 | Workflows & Productivity Tips | Build end-to-end workflows that multiply your output | Coming soon |
 | 19 | Onboarding New Team Members | Use AI agents to accelerate developer onboarding on your project | Coming soon |
