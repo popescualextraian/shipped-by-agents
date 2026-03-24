@@ -151,3 +151,101 @@ npx @playwright/cli --help
 **Cost awareness:** at current Claude pricing, one browser validation session costs roughly $0.30–0.50 in tokens. Use browser MCP for quick validation during development — to check a form, verify a layout, or confirm a fix. It is not a test suite replacement. When you find yourself validating the same thing twice, that's your signal to write a real test (Section 2 covers that).
 
 ---
+
+## When You Have (or Want) UI Tests
+
+The previous section was about quick, throwaway validation — the agent opens a browser, pokes around, and tells you what it found. Nothing gets saved.
+
+This section is different. Here the agent still uses browser MCP to **explore** your app, but the output is **real test code** — Playwright specs, Selenium tests, Cypress files — that lives in your repo and runs in CI. Two phases:
+
+1. **Explore** — the agent navigates your app through MCP, reads the accessibility tree, and understands the current UI state.
+2. **Generate** — the agent writes standard test code using the framework you already use (or want to adopt).
+
+The result is repeatable. You commit the tests, they run on every push, and they catch regressions long after the agent has moved on.
+
+### Tool Landscape
+
+| Your Stack | MCP Server for Exploration | What the Agent Generates |
+|------------|---------------------------|--------------------------|
+| **Playwright** | Playwright MCP | `.spec.ts` files using Playwright Test |
+| **Selenium** | Selenium MCP (by Angie Jones) | Selenium test code (Java/Python/JS) |
+| **Cypress** | Playwright MCP (for exploration) | Cypress `.cy.ts` spec files |
+
+**Selenium MCP setup:** The package is `@angiejones/mcp-selenium`. Add it with:
+
+```bash
+claude mcp add selenium -- npx -y @angiejones/mcp-selenium@latest
+```
+
+Or in your MCP config:
+
+```json
+{
+  "mcpServers": {
+    "selenium": {
+      "command": "npx",
+      "args": ["-y", "@angiejones/mcp-selenium@latest"]
+    }
+  }
+}
+```
+
+See the [Selenium MCP repo](https://github.com/angiejones/mcp-selenium) for full documentation.
+
+**Why Playwright MCP for Cypress?** Cypress doesn't have its own MCP server. But the agent only needs MCP for exploration — to see what's on the page. It generates Cypress code from what it learned. Playwright MCP works fine for that discovery step.
+
+### Playwright's Built-in AI Agents (v1.56+)
+
+Since version 1.56, Playwright ships three built-in AI agents that handle the explore-generate cycle without a separate coding agent:
+
+| Agent | What It Does |
+|-------|-------------|
+| **Planner** | Explores the app, writes a markdown test plan describing each flow |
+| **Generator** | Converts the plan into `.spec.ts` files with proper selectors and assertions |
+| **Healer** | Runs existing tests, detects failures, and auto-patches broken selectors |
+
+These agents are specialized. They know Playwright's API deeply and produce idiomatic test code.
+
+**When to use built-in agents vs. a general-purpose coding agent (Claude Code, Copilot):**
+
+- Use **Playwright's built-in agents** when your stack is Playwright and you want fast, focused test generation with minimal setup.
+- Use a **general-purpose coding agent** when you work with multiple frameworks, need to coordinate test code with app code, or want the agent to fix the source code (not just the tests) when something breaks.
+
+You can combine both — let Playwright's Generator create the initial specs, then use your coding agent to refine them alongside your application code.
+
+### The Explore → Generate Workflow
+
+This is what the agent does, regardless of which tool combination you pick:
+
+```mermaid
+flowchart LR
+    A[Agent explores app\nvia MCP] --> B[Understands\ncurrent UI]
+    B --> C[Generates test code\nPlaywright / Selenium]
+    C --> D[Runs tests\nin terminal]
+    D -->|Pass| E[Commit]
+    D -->|Fail| F[Reads error +\nre-explores UI]
+    F --> C
+
+    style A fill:#0A2540,color:#fff
+    style B fill:#0A2540,color:#fff
+    style C fill:#0A2540,color:#fff
+    style D fill:#0A2540,color:#fff
+    style E fill:#00BFA5,color:#fff
+    style F fill:#E8722A,color:#fff
+```
+
+The feedback loop (fail → re-explore → regenerate) is where agents shine. A human would alt-tab to the browser, squint at the error, and manually fix the selector. The agent reads the error, snapshots the page, and patches the test in seconds.
+
+### Best Practices for Agent-Generated Tests
+
+**Use stable selectors.** Prefer `getByRole`, `getByTestId`, and `getByLabel` over CSS selectors or XPath. These survive UI redesigns and are accessible by default.
+
+**"Record then refine" pattern.** Let Playwright's codegen (or the agent) capture the raw flow first. Then ask the agent to clean it up — extract page objects, remove waits, add meaningful assertions. The first draft is never the final draft.
+
+**One behavior per test.** Keep tests small and focused. "User can add a todo" is one test. "User can add, edit, and delete a todo" is three tests. Small tests fail with clear messages.
+
+**Always run generated tests before committing.** The agent should execute the tests it wrote. If you're using Claude Code, tell it: "Run the tests and fix any failures before committing." The explore → generate → run → fix loop should complete before code hits your branch.
+
+**Store tests alongside the code they test.** Put `checkout.spec.ts` next to your checkout component, not in a distant `tests/` folder. When the agent modifies a component, it sees the related tests in the same context window.
+
+---
