@@ -322,44 +322,83 @@ The OpenAPI → MCP approach deserves special attention. It turns your API spec 
 
 If you have an OpenAPI spec, you can auto-generate an MCP server that exposes each endpoint as a tool. The agent then calls your API the same way it calls any other MCP tool — with structured inputs and typed responses.
 
-Here is the flow using `openapi-mcp-generator`:
+We'll use [FastMCP](https://gofastmcp.com/integrations/openapi) — it's well-maintained, enterprise-friendly, and works with any OpenAPI spec regardless of your cloud provider.
 
-**1. Start with your OpenAPI spec** (e.g., `openapi.yaml`)
-
-**2. Generate the MCP server:**
+**1. Install FastMCP:**
 
 ```bash
-npx openapi-mcp-generator --spec openapi.yaml --output ./api-mcp-server
+pip install fastmcp httpx
 ```
 
-This reads your spec and produces a Node.js MCP server with one tool per endpoint.
+**2. Create the MCP server** — one file, a few lines:
 
-**3. Configure in Claude Code:**
+```python
+# api_mcp_server.py
+import os
+import httpx
+from fastmcp import FastMCP
+
+# Load your OpenAPI spec
+spec = httpx.get("https://api.example.com/openapi.json").json()
+
+# Create an HTTP client with auth
+client = httpx.AsyncClient(
+    base_url="https://api.example.com",
+    headers={"Authorization": f"Bearer {os.environ['API_TOKEN']}"}
+)
+
+# Generate the MCP server — every endpoint becomes a tool
+mcp = FastMCP.from_openapi(openapi_spec=spec, client=client, name="My API")
+
+if __name__ == "__main__":
+    mcp.run()
+```
+
+By default, every endpoint in the spec becomes an MCP tool. FastMCP handles path parameters, query strings, request bodies, and headers automatically.
+
+**3. Control what the agent can access.** Enterprise APIs have endpoints the agent shouldn't touch. Use route maps to exclude admin, internal, or destructive endpoints:
+
+```python
+from fastmcp.server.openapi import RouteMap, MCPType
+
+mcp = FastMCP.from_openapi(
+    openapi_spec=spec,
+    client=client,
+    route_maps=[
+        RouteMap(methods=["GET"], pattern=r"^/api/.*", mcp_type=MCPType.TOOL),
+        RouteMap(pattern=r"^/admin/.*", mcp_type=MCPType.EXCLUDE),
+        RouteMap(tags={"internal"}, mcp_type=MCPType.EXCLUDE),
+    ],
+)
+```
+
+This gives the agent read access to your API while keeping admin and internal routes off-limits.
+
+**4. Configure in Claude Code:**
 
 ```bash
-claude mcp add my-api -- node ./api-mcp-server/index.js
+claude mcp add my-api -- python api_mcp_server.py
 ```
 
-**4. Configure in Copilot** (use the dual-config pattern from Chapter 15):
+**5. Configure in Copilot:**
 
 ```json
 {
   "servers": {
     "my-api": {
-      "command": "node",
-      "args": ["./api-mcp-server/index.js"],
+      "command": "python",
+      "args": ["api_mcp_server.py"],
       "transportType": "stdio"
     }
   }
 }
 ```
 
-**5. Agent calls endpoints as MCP tools.** It sends a request, reads the response, and validates status codes and payloads — all within the conversation.
+**6. Agent calls endpoints as MCP tools.** It sends a request, reads the response, and validates status codes and payloads — all within the conversation.
 
-**Alternatives worth knowing:**
+> **Note:** FastMCP's docs are clear that auto-converted OpenAPI servers work best for validation and prototyping. For production-critical agent workflows, consider curating which endpoints are exposed and adding meaningful descriptions.
 
-- **AWS OpenAPI MCP Server** — creates tools from your endpoints at runtime. No code generation step needed. You point it at a spec URL and it builds tools on the fly.
-- **FastMCP** (Python) — `FastMCP.from_openapi(url)` is a one-liner for Python teams. Minimal setup, good for quick validation.
+**Alternative:** The [AWS OpenAPI MCP Server](https://awslabs.github.io/mcp/servers/openapi-mcp-server) (TypeScript) is part of the AWS Labs MCP monorepo and creates tools from endpoints at runtime with Cognito auth, caching, and observability built in. A good fit for teams already on AWS.
 
 ### Challenges
 
@@ -655,9 +694,8 @@ This is the L4 workflow in practice. Once you've seen it work, you won't want to
 - [Browser MCP](https://browsermcp.io/) — Chrome extension
 - [Selenium MCP](https://github.com/angiejones/mcp-selenium) — by Angie Jones
 - [Postman MCP Server](https://github.com/postmanlabs/postman-mcp-server) — official (requires Postman account)
-- [openapi-mcp-generator](https://github.com/harsha-iiiv/openapi-mcp-generator) — OpenAPI to MCP (MIT)
-- [AWS OpenAPI MCP Server](https://awslabs.github.io/mcp/servers/openapi-mcp-server) — AWS Labs
-- [FastMCP](https://gofastmcp.com/integrations/openapi) — Python, OpenAPI integration
+- [FastMCP](https://gofastmcp.com/integrations/openapi) — Python, OpenAPI → MCP with route control
+- [AWS OpenAPI MCP Server](https://awslabs.github.io/mcp/servers/openapi-mcp-server) — AWS Labs, TypeScript
 
 ### Playwright AI
 
@@ -691,8 +729,7 @@ Every tool in this chapter is free and open source — with one exception.
 | Chrome DevTools MCP | Yes | Yes | Open source | Google official |
 | Browser MCP | Yes | Yes | Open source | Chrome extension |
 | Selenium MCP | Yes | Yes | Open source | By Angie Jones |
-| openapi-mcp-generator | Yes | Yes | MIT | TypeScript CLI |
-| AWS OpenAPI MCP Server | Yes | Yes | Open source | AWS Labs |
-| FastMCP | Yes | Yes | Open source | Python |
+| FastMCP | Yes | Yes | Apache 2.0 | Python, OpenAPI integration |
+| AWS OpenAPI MCP Server | Yes | Yes | Apache 2.0 | AWS Labs, TypeScript |
 | **Postman** | **Freemium** | **No** | **Proprietary** | Free: 1 user, 25 runs/month. Paid: $19+/user/month |
 | Postman MCP Server | Yes | Yes | Open source | Requires Postman account + API key |
