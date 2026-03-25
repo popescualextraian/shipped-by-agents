@@ -28,7 +28,7 @@ Hands-on tutorials that take you from "what is an AI coding agent?" to shipping 
 | 7 | [Reusable Prompts, Skills & Agents](07_skills-and-agents/07_skills-and-agents.md) | Create custom skills and agents — hands-on with a REST Assured test agent | 45 min |
 | 8 | [Multi-Agent Workflows](08_workflows/08_workflows.md) | Orchestrate multi-step workflows with state management and human-in-the-loop | 45 min |
 | 9 | [Automating User Story Creation](09_story-creation/09_story-creation.md) | Apply skill-building to non-coding tasks — user stories, MCP integration, Atlassian connectivity | 30 min |
-| 10 | Testing with AI Agents | Integration tests, UI/Playwright tests, API testing, test data generation, TDD patterns | Coming soon |
+| 10 | [Testing with AI Agents](10_testing-with-agents/10_testing-with-agents.md) | UI validation with Playwright MCP, API testing with FastMCP, maintaining test suites, testing + logging combo | 45 min |
 | 11 | [Debugging & Troubleshooting](11_debugging/) | Agent-driven debugging, external log integration, root cause analysis, reproducing issues | In progress |
 | 11.1 | [Integrating Remote Log Analysis](11_debugging/01_log-analysis-integration.md) | Connect your agent to CloudWatch, Datadog, Splunk, Grafana, and more via MCP | 25 min |
 | 12 | Code Review & Refactoring | PR reviews, legacy code refactoring, migrations, dependency upgrades | Coming soon |
