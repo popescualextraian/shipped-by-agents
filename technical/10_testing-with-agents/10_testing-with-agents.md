@@ -40,7 +40,7 @@ The usual answer is: open a browser, click around, eyeball it. The agent can do 
 
 Here's the core idea: you connect a **browser MCP server** to your agent. The agent launches a real browser, reads the page through its accessibility tree, clicks buttons, fills forms, and reports what happened. It sees what a screen reader sees — every element, every label, every state change.
 
-**This is ad-hoc validation, not a test suite.** Nothing gets saved. Nothing is repeatable. The agent checks your work right now, in this moment. Think of it as a colleague who opens your branch, tries the feature, and tells you what they found. If you need repeatable tests, that's Section 2.
+**This is ad-hoc validation, not a test suite.** Nothing gets saved. Nothing is repeatable. The agent checks your work right now, in this moment. Think of it as a colleague who opens your branch, tries the feature, and tells you what they found. If you need repeatable tests, keep reading — the next section covers that.
 
 ### Browser MCP Options
 
@@ -148,7 +148,7 @@ Use CLI for longer sessions or when running many validations in sequence. Use MC
 npx @playwright/cli --help
 ```
 
-**Cost awareness:** at current Claude pricing, one browser validation session costs roughly $0.30–0.50 in tokens. Use browser MCP for quick validation during development — to check a form, verify a layout, or confirm a fix. It is not a test suite replacement. When you find yourself validating the same thing twice, that's your signal to write a real test (Section 2 covers that).
+**Cost awareness:** at current Claude pricing, one browser validation session costs roughly $0.30–0.50 in tokens. Use browser MCP for quick validation during development — to check a form, verify a layout, or confirm a fix. It is not a test suite replacement. When you find yourself validating the same thing twice, that's your signal to write a real test — the next section shows you how.
 
 ---
 
@@ -252,7 +252,7 @@ The feedback loop (fail → re-explore → regenerate) is where agents shine. A 
 
 ## When You Have No API Tests
 
-Same situation as Section 1, but for APIs. Your agent just built or modified REST endpoints and you need to validate they work. No test suite exists yet. Several strategies can help, from lightweight throwaway scripts to reusable MCP-based approaches.
+Same situation as the UI section, but for APIs. Your agent just built or modified REST endpoints and you need to validate they work. No test suite exists yet. Several strategies can help, from lightweight throwaway scripts to reusable MCP-based approaches.
 
 ### Strategies for Ad-Hoc API Validation
 
@@ -341,7 +341,7 @@ Set `MY_API_KEY` in your shell environment or `.env` file (which should be in `.
 
 ## When You Have (or Want) API Tests
 
-Your team has an existing API test suite — or plans to build one. The agent writes, runs, and maintains tests in your chosen framework. This mirrors the UI testing workflow from Section 2, but for APIs: the agent understands your endpoints (via specs or MCP), generates test code, runs it, and fixes failures.
+Your team has an existing API test suite — or plans to build one. The agent writes, runs, and maintains tests in your chosen framework. This mirrors the UI testing workflow from the previous section, but for APIs: the agent understands your endpoints (via specs or MCP), generates test code, runs it, and fixes failures.
 
 ### Tool Landscape
 
@@ -581,14 +581,14 @@ Two exercises — one UI, one API. Each follows the same arc: validate ad-hoc, t
 
 ### Bonus — The Power Combo
 
-Combine testing with log collection (Section 3):
+Combine testing with log collection (The Power Combo):
 
 1. Set up a local app with file-based logging.
 2. Introduce a deliberate bug (a missing middleware, a wrong status code, a broken database query).
 3. Tell the agent: "Run the tests. If anything fails, read the logs, diagnose the issue, and fix it."
 4. Watch the agent close the loop — test, read, diagnose, fix, re-test — without your help.
 
-This is the L4 workflow from Section 3 in practice. Once you've seen it work, you won't want to go back.
+This is the L4 workflow in practice. Once you've seen it work, you won't want to go back.
 
 ---
 

@@ -28,7 +28,7 @@ Training documentation for developers and teams looking to understand, adopt, an
 | 7 | Creating reusable prompts, skills, or simple agents | 45 min | Done |
 | 8 | Multi-agent workflows: orchestration, state, and human-in-the-loop | 45 min | Done |
 | 9 | Automating user story creation | 30 min | Done |
-| 10 | Testing with AI Agents | TBD | Pending |
+| 10 | Testing with AI Agents | 45 min | Done |
 | 11 | Debugging & Troubleshooting | TBD | Pending |
 | 12 | Code Review & Refactoring | TBD | Pending |
 | 13 | DevOps & CI/CD | TBD | Pending |
