@@ -196,22 +196,76 @@ See the [Selenium MCP repo](https://github.com/angiejones/mcp-selenium) for full
 
 ### Playwright's Built-in AI Agents (v1.56+)
 
-Since version 1.56, Playwright ships three built-in AI agents that handle the explore-generate cycle without a separate coding agent:
+Since version 1.56, Playwright ships three [built-in AI agents](https://playwright.dev/docs/test-agents) that handle the explore-generate-heal cycle without a separate coding agent. These agents use MCP under the hood to control a real browser — the same protocol you set up in the previous section — but they're purpose-built for test automation.
 
 | Agent | What It Does |
 |-------|-------------|
-| **Planner** | Explores the app, writes a markdown test plan describing each flow |
-| **Generator** | Converts the plan into `.spec.ts` files with proper selectors and assertions |
-| **Healer** | Runs existing tests, detects failures, and auto-patches broken selectors |
+| **Planner** | Explores the app, writes a markdown test plan describing each user flow and scenario |
+| **Generator** | Converts the plan into `.spec.ts` files with proper selectors and assertions, verifying live as it goes |
+| **Healer** | Runs existing tests, detects failures, inspects page snapshots, and auto-patches broken selectors |
 
-These agents are specialized. They know Playwright's API deeply and produce idiomatic test code.
+#### Setting up Playwright Agents
 
-**When to use built-in agents vs. a general-purpose coding agent (Claude Code, Copilot):**
+One command scaffolds everything. Pick your coding agent:
 
-- Use **Playwright's built-in agents** when your stack is Playwright and you want fast, focused test generation with minimal setup.
-- Use a **general-purpose coding agent** when you work with multiple frameworks, need to coordinate test code with app code, or want the agent to fix the source code (not just the tests) when something breaks.
+```bash
+# For Claude Code
+npx playwright init-agents --loop=claude
 
-You can combine both — let Playwright's Generator create the initial specs, then use your coding agent to refine them alongside your application code.
+# For VS Code (Copilot)
+npx playwright init-agents --loop=vscode
+```
+
+This creates an agents folder with markdown definitions and a seed file:
+
+```
+.claude/agents/         # or .vscode/ for Copilot
+├── planner.md          # Planner agent instructions
+├── generator.md        # Generator agent instructions
+├── healer.md           # Healer agent instructions
+specs/                  # Test plans (output of Planner)
+tests/
+└── seed.spec.ts        # Seed file — shared setup copied into every generated test
+```
+
+The **seed file** is important. It's your foundation — authentication, test data, base URL, navigation helpers. If the seed is unreliable, nothing the agents produce will be reliable either. Get the seed right first.
+
+#### The three-stage workflow
+
+The agents work in sequence:
+
+**1. Planner → markdown test plan.** Point the Planner at your app. It navigates pages, reads the accessibility tree, and produces a structured markdown plan: "User can log in," "User can add item to cart," "User can checkout." Each scenario lists the steps and expected outcomes.
+
+```bash
+# In Claude Code, invoke the planner agent
+/agents planner
+```
+
+**2. Generator → `.spec.ts` files.** Feed the plan to the Generator. It reads each scenario, navigates the app live to verify selectors, and produces Playwright Test files with real assertions. It doesn't guess — it checks every selector against the actual page.
+
+**3. Healer → auto-fix broken tests.** When tests break (a button moved, a label changed, a page restructured), the Healer runs the failing tests in debug mode. It inspects page snapshots, identifies the broken locator, finds the correct replacement, updates the test code, and re-runs to confirm the fix.
+
+#### Customizing agent behavior
+
+Because agent definitions are plain markdown files, you can edit them:
+
+- Adjust the Planner's exploration depth (how many pages, which flows to prioritize)
+- Change the Generator's code style (prefer page objects, use specific assertion patterns)
+- Tune the Healer's tolerance (how aggressively to rewrite selectors vs. flagging for human review)
+
+This is one of the strengths of Playwright's approach — the agents are transparent and configurable, not black boxes.
+
+#### When to use built-in agents vs. a general-purpose coding agent
+
+| Scenario | Use Playwright Agents | Use Claude Code / Copilot |
+|----------|----------------------|--------------------------|
+| Pure Playwright stack, focused on test generation | Yes — fast, specialized, idiomatic output | Overkill |
+| Multiple frameworks (Playwright + Selenium + API tests) | No | Yes — handles any framework |
+| Need to fix source code when tests fail | No — agents only fix tests | Yes — can fix app code too |
+| Self-healing existing test suite | Yes — Healer is purpose-built for this | Can do it, but less specialized |
+| Need to coordinate tests with app changes | Partially | Yes — sees full codebase |
+
+You can combine both — let Playwright's Generator create the initial specs, then use your coding agent to refine them alongside your application code. The "record then refine" pattern works especially well: Planner discovers the flows, Generator writes the specs, and your coding agent polishes them to match team conventions.
 
 ### The Explore → Generate Workflow
 
