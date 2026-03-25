@@ -545,3 +545,100 @@ This section gives you everything you need to start using the testing + logging 
 You don't need those chapters to use what you learned here. Start with file-based logs and the five-step instruction above — that alone eliminates most of the back-and-forth in your debugging workflow.
 
 ---
+
+## Try It Yourself
+
+Two exercises — one UI, one API. Each follows the same arc: validate ad-hoc, then generate a repeatable test.
+
+### Part A — UI Testing
+
+1. **Set up Playwright MCP.** Add the Playwright MCP server to your agent configuration:
+
+```json
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
+  }
+}
+```
+
+2. **Ad-hoc validation.** Ask your agent: "Open [https://todomvc.com/examples/react/dist/](https://todomvc.com/examples/react/dist/), add three todos, mark the second one complete, and tell me what you see." The agent should report the state of all three items — two active, one completed.
+
+3. **Generate a repeatable test.** Ask the agent: "Now write a Playwright `.spec.ts` test that does the same thing — adds three todos, completes the second, and asserts the correct state." Save the file.
+
+4. **Run it.** Ask the agent to run the test with `npx playwright test`. Confirm it passes.
+
+### Part B — API Testing
+
+1. **Ad-hoc validation.** Ask your agent: "Send a POST to `https://jsonplaceholder.typicode.com/posts` with a title, body, and userId. Show me the response." The agent should report a `201` status and the created resource with an `id`.
+
+2. **Generate a repeatable test.** Ask the agent: "Write a test that creates a post on JSONPlaceholder and asserts the response status and body." Pick your framework — Playwright API testing, pytest with `requests`, or a Postman collection.
+
+3. **Run it.** Ask the agent to execute the test. Confirm it passes.
+
+### Bonus — The Power Combo
+
+Combine testing with log collection (Section 3):
+
+1. Set up a local app with file-based logging.
+2. Introduce a deliberate bug (a missing middleware, a wrong status code, a broken database query).
+3. Tell the agent: "Run the tests. If anything fails, read the logs, diagnose the issue, and fix it."
+4. Watch the agent close the loop — test, read, diagnose, fix, re-test — without your help.
+
+This is the L4 workflow from Section 3 in practice. Once you've seen it work, you won't want to go back.
+
+---
+
+## Resources
+
+### MCP Servers
+
+- [Playwright MCP](https://github.com/microsoft/playwright-mcp) — Microsoft official (Apache 2.0)
+- [Chrome DevTools MCP](https://github.com/ChromeDevTools/chrome-devtools-mcp) — Google official
+- [Browser MCP](https://browsermcp.io/) — Chrome extension
+- [Selenium MCP](https://github.com/angiejones/mcp-selenium) — by Angie Jones
+- [Postman MCP Server](https://github.com/postmanlabs/postman-mcp-server) — official (requires Postman account)
+- [openapi-mcp-generator](https://github.com/harsha-iiiv/openapi-mcp-generator) — OpenAPI to MCP (MIT)
+- [AWS OpenAPI MCP Server](https://awslabs.github.io/mcp/servers/openapi-mcp-server) — AWS Labs
+- [FastMCP](https://gofastmcp.com/integrations/openapi) — Python, OpenAPI integration
+
+### Playwright AI
+
+- [Playwright Test Agents (v1.56+)](https://playwright.dev/docs/test-agents) — built-in Planner, Generator, Healer
+- [Playwright CLI vs MCP comparison](https://testdino.com/blog/playwright-cli-vs-mcp/) — token cost benchmarks
+
+### Community
+
+- [Playwright MCP burns 114K tokens per test](https://scrolltest.medium.com/playwright-mcp-burns-114k-tokens-per-test-the-new-cli-uses-27k-heres-when-to-use-each-65dabeaac7a0) — MCP vs CLI cost analysis
+- [Playwright AI Ecosystem 2026](https://testdino.com/blog/playwright-ai-ecosystem/) — ecosystem overview
+- [Postman Agent Mode Guide](https://blog.postman.com/testing-apis-with-postman-agent-mode-a-practical-guide/)
+- [Microsoft: The Complete Playwright E2E Story](https://developer.microsoft.com/blog/the-complete-playwright-end-to-end-story-tools-ai-and-real-world-workflows)
+
+### Related Chapters
+
+- [Chapter 3 — Coding with Agents](../03_coding-with-agents/03_coding-with-agents.md) (TDD basics)
+- [Chapter 7 — Skills and Agents](../07_skills-and-agents/07_skills-and-agents.md) (REST API testing skill, Hurl)
+- [Chapter 11 — Debugging & Troubleshooting](../11_debugging/) (log collection)
+- [Chapter 15 — Power-Ups](../15_power-ups/) (MCP overview)
+
+---
+
+## Tool Licensing & Pricing
+
+Every tool in this chapter is free and open source — with one exception.
+
+| Tool | Free? | Open Source? | License | Notes |
+|------|-------|-------------|---------|-------|
+| Playwright MCP | Yes | Yes | Apache 2.0 | Microsoft official |
+| Playwright CLI | Yes | Yes | Apache 2.0 | Lighter-weight alternative |
+| Chrome DevTools MCP | Yes | Yes | Open source | Google official |
+| Browser MCP | Yes | Yes | Open source | Chrome extension |
+| Selenium MCP | Yes | Yes | Open source | By Angie Jones |
+| openapi-mcp-generator | Yes | Yes | MIT | TypeScript CLI |
+| AWS OpenAPI MCP Server | Yes | Yes | Open source | AWS Labs |
+| FastMCP | Yes | Yes | Open source | Python |
+| **Postman** | **Freemium** | **No** | **Proprietary** | Free: 1 user, 25 runs/month. Paid: $19+/user/month |
+| Postman MCP Server | Yes | Yes | Open source | Requires Postman account + API key |
