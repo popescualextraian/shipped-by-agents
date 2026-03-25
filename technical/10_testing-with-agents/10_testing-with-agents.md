@@ -308,15 +308,37 @@ The feedback loop (fail → re-explore → regenerate) is where agents shine. A 
 
 Same situation as the UI section, but for APIs. Your agent just built or modified REST endpoints and you need to validate they work. No test suite exists yet. Several strategies can help, from lightweight throwaway scripts to reusable MCP-based approaches.
 
-### Strategies for Ad-Hoc API Validation
+### The Simplest Approach: Just Ask
 
-| Approach | How It Works | Agent-Friendly? | Repeatable? |
-|----------|-------------|-----------------|-------------|
-| **OpenAPI → MCP Server** | Generate an MCP server from your OpenAPI/Swagger spec. The agent calls your API as native tools. | Highest | Semi — MCP server is reusable |
-| **Inline code** (fetch/requests/curl) | Agent writes quick scripts to hit endpoints and check responses. | High | No — throwaway |
-| **Postman + MCP** | Agent connects to a Postman workspace, runs saved requests. | Medium | Yes — collections persist |
+Before reaching for any framework, remember: the agent already has a terminal. You can simply ask it to validate an endpoint.
 
-The OpenAPI → MCP approach deserves special attention. It turns your API spec into something the agent can interact with natively — no manual curl commands, no copy-pasting URLs.
+**curl** — zero setup, works everywhere:
+
+```
+You: "Hit POST /api/users with a test payload and check the response."
+```
+
+The agent runs `curl`, reads the output, and tells you if the status code and body look right. No library, no config.
+
+**Python requests / Java HttpClient / Node fetch** — the agent writes a quick script:
+
+```
+You: "Write a Python script that calls GET /api/products and checks we get a 200 with a JSON array."
+```
+
+The agent writes the script, runs it, and reports the result. The script is throwaway — but for a quick "does this endpoint work?" check, that's fine.
+
+These approaches are fast and frictionless. Their limitation: nothing gets saved. If you want the agent to validate endpoints *as part of every change it makes*, you need something more structured.
+
+### Strategies Compared
+
+| Approach | Setup | Agent-Friendly? | Repeatable? | Best For |
+|----------|-------|-----------------|-------------|----------|
+| **curl / inline scripts** | None | High — agents write these naturally | No — throwaway | Quick one-off checks |
+| **OpenAPI → MCP Server** | Medium — need OpenAPI spec + FastMCP | Highest — API becomes native tools | Yes — MCP server is reusable | Teams with OpenAPI specs |
+| **Postman + MCP** | Medium — need Postman account | Medium | Yes — collections persist | Teams already using Postman |
+
+For quick validation, curl or a script is all you need. For structured, repeatable validation — especially if you have an OpenAPI spec — read on.
 
 ### Worked Example: OpenAPI → MCP
 
