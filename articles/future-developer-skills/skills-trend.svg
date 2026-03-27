@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 480" font-family="Segoe UI, system-ui, sans-serif">
+  <defs>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0A2540" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="fadingGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#E8722A" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#E8722A" stop-opacity="0.03"/>
+    </linearGradient>
+    <linearGradient id="risingGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00BFA5" stop-opacity="0.03"/>
+      <stop offset="100%" stop-color="#00BFA5" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1020" height="480" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="450" y="36" text-anchor="middle" font-size="20" font-weight="700" fill="#0A2540">The Skills Shift</text>
+  <text x="450" y="56" text-anchor="middle" font-size="12" fill="#94a3b8" font-style="italic">Directional trends, not predictions — every developer's path will vary</text>
+
+  <!-- Chart area -->
+  <!-- Y axis -->
+  <line x1="100" y1="85" x2="100" y2="390" stroke="#e0e6ed" stroke-width="1.5"/>
+  <text x="50" y="240" text-anchor="middle" font-size="11" fill="#94a3b8" font-weight="600" transform="rotate(-90 50 240)" letter-spacing="1.5">RELEVANCE</text>
+
+  <!-- X axis -->
+  <line x1="100" y1="390" x2="830" y2="390" stroke="#e0e6ed" stroke-width="1.5"/>
+
+  <!-- Time labels -->
+  <text x="160" y="415" text-anchor="middle" font-size="11" fill="#94a3b8">2015</text>
+  <text x="340" y="415" text-anchor="middle" font-size="11" fill="#94a3b8">2020</text>
+  <text x="520" y="415" text-anchor="middle" font-size="11" fill="#94a3b8">2024</text>
+  <text x="700" y="415" text-anchor="middle" font-size="11" fill="#94a3b8">2028+</text>
+
+  <!-- AI arrival marker -->
+  <line x1="520" y1="85" x2="520" y2="390" stroke="#0A2540" stroke-width="1" stroke-dasharray="6,4" opacity="0.4"/>
+  <rect x="480" y="85" width="80" height="20" rx="4" fill="#0A2540"/>
+  <text x="520" y="98" text-anchor="middle" font-size="9" font-weight="600" fill="#fff">Layer 5 begins</text>
+
+  <!-- Fading zone background -->
+  <path d="M520,140 Q620,170 830,220 L830,390 L520,390 Z" fill="url(#fadingGrad)"/>
+
+  <!-- Rising zone background -->
+  <path d="M520,280 Q620,220 830,120 L830,85 L520,85 Z" fill="url(#risingGrad)"/>
+
+  <!-- FADING SKILLS (trending down after 2024) -->
+
+  <!-- Language mastery: high before, declining -->
+  <path d="M160,140 C250,140 400,145 520,160 C600,175 700,220 810,260" fill="none" stroke="#E8722A" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="810" cy="260" r="3.5" fill="#E8722A"/>
+  <text x="820" y="256" font-size="10" fill="#E8722A" font-weight="600">Language mastery</text>
+
+  <!-- Framework expertise: high before, declining -->
+  <path d="M160,165 C250,155 400,155 520,170 C600,185 700,235 810,280" fill="none" stroke="#E8722A" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <circle cx="810" cy="280" r="3" fill="#E8722A" opacity="0.7"/>
+  <text x="820" y="276" font-size="10" fill="#E8722A" opacity="0.8">Framework depth</text>
+
+  <!-- Syntax fluency: medium before, dropping -->
+  <path d="M160,200 C250,195 400,195 520,210 C600,230 700,290 810,330" fill="none" stroke="#E8722A" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="6,3" opacity="0.5"/>
+  <circle cx="810" cy="330" r="3" fill="#E8722A" opacity="0.5"/>
+  <text x="820" y="326" font-size="10" fill="#E8722A" opacity="0.6">Syntax fluency</text>
+
+  <!-- RISING SKILLS (accelerating after 2024) -->
+
+  <!-- Architecture & system design: medium before, rising -->
+  <path d="M160,240 C250,238 400,230 520,215 C600,195 700,150 810,115" fill="none" stroke="#00BFA5" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="810" cy="115" r="3.5" fill="#00BFA5"/>
+  <text x="820" y="111" font-size="10" fill="#00BFA5" font-weight="600">Architecture</text>
+
+  <!-- Domain/business knowledge: low before, rising fast -->
+  <path d="M160,300 C250,295 400,280 520,255 C600,225 700,165 810,130" fill="none" stroke="#00BFA5" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="810" cy="130" r="3.5" fill="#00BFA5"/>
+  <text x="820" y="126" font-size="10" fill="#00BFA5" font-weight="600">Domain knowledge</text>
+
+  <!-- AI fluency: didn't exist, then rockets -->
+  <path d="M460,380 C490,375 510,360 520,320 C560,240 650,180 810,148" fill="none" stroke="#00BFA5" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+  <circle cx="810" cy="148" r="3" fill="#00BFA5" opacity="0.7"/>
+  <text x="820" y="144" font-size="10" fill="#00BFA5" opacity="0.8">AI fluency</text>
+
+  <!-- Spec writing: barely existed, rising -->
+  <path d="M400,370 C450,360 500,340 520,310 C570,260 650,210 810,175" fill="none" stroke="#00BFA5" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="6,3" opacity="0.5"/>
+  <circle cx="810" cy="175" r="3" fill="#00BFA5" opacity="0.5"/>
+  <text x="820" y="171" font-size="10" fill="#00BFA5" opacity="0.6">Spec writing</text>
+
+  <!-- Debugging/review: steady then rising -->
+  <path d="M160,220 C250,220 400,218 520,210 C600,195 700,170 810,158" fill="none" stroke="#00BFA5" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="6,3" opacity="0.5"/>
+  <circle cx="810" cy="158" r="3" fill="#00BFA5" opacity="0.5"/>
+  <text x="820" y="154" font-size="10" fill="#00BFA5" opacity="0.6">Debugging &amp; review</text>
+
+  <!-- Legend -->
+  <g filter="url(#shadow)">
+    <rect x="130" y="432" width="280" height="36" rx="6" fill="#f7f9fb" stroke="#e0e6ed" stroke-width="1"/>
+    <line x1="145" y1="450" x2="175" y2="450" stroke="#E8722A" stroke-width="2.5"/>
+    <text x="182" y="454" font-size="10" fill="#4a5568">Fading (not dying)</text>
+    <line x1="280" y1="450" x2="310" y2="450" stroke="#00BFA5" stroke-width="2.5"/>
+    <text x="317" y="454" font-size="10" fill="#4a5568">Rising</text>
+  </g>
+</svg>

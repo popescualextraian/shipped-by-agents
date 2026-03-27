@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 720" font-family="Segoe UI, system-ui, sans-serif">
+  <defs>
+    <marker id="arrow-teal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#00BFA5"/>
+    </marker>
+    <filter id="shadow" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0A2540" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="720" fill="#ffffff" rx="0"/>
+
+  <!-- Title -->
+  <text x="450" y="42" text-anchor="middle" font-size="20" font-weight="700" fill="#0A2540">The Five Layers of Abstraction</text>
+  <text x="450" y="62" text-anchor="middle" font-size="12" fill="#94a3b8" font-style="italic">Each layer killed a skill set and created a new one</text>
+
+  <!-- Vertical arrow on the left -->
+  <line x1="58" y1="100" x2="58" y2="660" stroke="#00BFA5" stroke-width="2.5" marker-end="url(#arrow-teal)"/>
+  <text x="54" y="685" text-anchor="middle" font-size="10" fill="#00BFA5" font-weight="600" letter-spacing="1.5">ABSTRACTION</text>
+
+  <!-- Layer 1: Machine Code -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="555" width="780" height="90" rx="8" fill="#f7f9fb" stroke="#e0e6ed" stroke-width="1.5"/>
+    <rect x="90" y="555" width="780" height="5" rx="8" fill="#4a4a4a"/>
+    <!-- Layer number -->
+    <rect x="108" y="572" width="32" height="22" rx="4" fill="#4a4a4a"/>
+    <text x="124" y="587" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">L1</text>
+    <!-- Title -->
+    <text x="152" y="588" font-size="14" font-weight="600" fill="#0A2540">Machine Code &amp; Punch Cards</text>
+    <text x="460" y="588" font-size="11" fill="#94a3b8">1940s–1950s</text>
+    <!-- Content -->
+    <text x="124" y="614" font-size="11" fill="#4a5568">
+      <tspan font-weight="600" fill="#E8722A">Faded:</tspan> —
+    </text>
+    <text x="124" y="632" font-size="11" fill="#4a5568">
+      <tspan font-weight="600" fill="#00BFA5">Rose:</tspan> Knowing the machine's instruction set, wiring hardware, reading punch cards
+    </text>
+  </g>
+
+  <!-- Layer 2: Assembly -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="445" width="780" height="90" rx="8" fill="#f7f9fb" stroke="#e0e6ed" stroke-width="1.5"/>
+    <rect x="90" y="445" width="780" height="5" rx="8" fill="#0A2540"/>
+    <rect x="108" y="462" width="32" height="22" rx="4" fill="#0A2540"/>
+    <text x="124" y="477" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">L2</text>
+    <text x="152" y="478" font-size="14" font-weight="600" fill="#0A2540">Assembly &amp; Early Languages</text>
+    <text x="460" y="478" font-size="11" fill="#94a3b8">1950s–1970s · Fortran, COBOL</text>
+    <text x="124" y="504" font-size="11" fill="#4a5568">
+      <tspan font-weight="600" fill="#E8722A">Faded:</tspan> Memorizing binary instruction sets, counting clock cycles
+    </text>
+    <text x="124" y="522" font-size="11" fill="#4a5568">
+      <tspan font-weight="600" fill="#00BFA5">Rose:</tspan> Algorithmic thinking, mathematical modeling
+    </text>
+  </g>
+
+  <!-- Layer 3: High-Level Languages -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="335" width="780" height="90" rx="8" fill="#f7f9fb" stroke="#e0e6ed" stroke-width="1.5"/>
+    <rect x="90" y="335" width="780" height="5" rx="8" fill="#0A2540"/>
+    <rect x="108" y="352" width="32" height="22" rx="4" fill="#0A2540"/>
+    <text x="124" y="367" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">L3</text>
+    <text x="152" y="368" font-size="14" font-weight="600" fill="#0A2540">High-Level Languages &amp; OOP</text>
+    <text x="460" y="368" font-size="11" fill="#94a3b8">1980s–2000s · Java, Python, C#</text>
+    <text x="124" y="394" font-size="11" fill="#4a5568">
+      <tspan font-weight="600" fill="#E8722A">Faded:</tspan> Manual memory management, pointer arithmetic, platform-specific code
+    </text>
+    <text x="124" y="412" font-size="11" fill="#4a5568">
+      <tspan font-weight="600" fill="#00BFA5">Rose:</tspan> Design patterns, object modeling, system architecture
+    </text>
+  </g>
+
+  <!-- Layer 4: Frameworks & Cloud -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="225" width="780" height="90" rx="8" fill="#f7f9fb" stroke="#e0e6ed" stroke-width="1.5"/>
+    <rect x="90" y="225" width="780" height="5" rx="8" fill="#0A2540"/>
+    <rect x="108" y="242" width="32" height="22" rx="4" fill="#0A2540"/>
+    <text x="124" y="257" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">L4</text>
+    <text x="152" y="258" font-size="14" font-weight="600" fill="#0A2540">Frameworks, Libraries &amp; Cloud</text>
+    <text x="460" y="258" font-size="11" fill="#94a3b8">2000s–2020s · Spring, React, AWS, Terraform</text>
+    <text x="124" y="284" font-size="11" fill="#4a5568">
+      <tspan font-weight="600" fill="#E8722A">Faded:</tspan> Writing your own HTTP server, ORM, managing physical servers
+    </text>
+    <text x="124" y="302" font-size="11" fill="#4a5568">
+      <tspan font-weight="600" fill="#00BFA5">Rose:</tspan> Framework selection, cloud cost management, infrastructure-as-code
+    </text>
+  </g>
+
+  <!-- Layer 5: AI — Highlighted -->
+  <g filter="url(#shadow)">
+    <rect x="90" y="95" width="780" height="110" rx="8" fill="#0A2540" stroke="#00BFA5" stroke-width="2"/>
+    <!-- Accent bar -->
+    <rect x="90" y="95" width="780" height="5" rx="8" fill="#00BFA5"/>
+    <rect x="108" y="114" width="32" height="22" rx="4" fill="#00BFA5"/>
+    <text x="124" y="129" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">L5</text>
+    <text x="152" y="130" font-size="14" font-weight="600" fill="#ffffff">AI — Natural Language to Working Software</text>
+    <text x="560" y="130" font-size="11" fill="#94a3b8">2024+ · Claude, Copilot, Codex</text>
+    <text x="124" y="156" font-size="11" fill="#cbd5e1">
+      <tspan font-weight="600" fill="#E8722A">Fading:</tspan> Language mastery, syntax fluency, framework-specific expertise, boilerplate
+    </text>
+    <text x="124" y="174" font-size="11" fill="#cbd5e1">
+      <tspan font-weight="600" fill="#00BFA5">Rising:</tspan> Spec writing, architecture, domain knowledge, AI fluency, debugging &amp; review
+    </text>
+    <!-- Non-determinism callout -->
+    <rect x="590" y="144" width="260" height="46" rx="6" fill="#E8722A" fill-opacity="0.15" stroke="#E8722A" stroke-width="1" stroke-opacity="0.4"/>
+    <text x="604" y="161" font-size="10" font-weight="600" fill="#E8722A">⚡ NEW: Non-deterministic</text>
+    <text x="604" y="179" font-size="10" fill="#cbd5e1">Same prompt → different output each time</text>
+  </g>
+
+  <!-- Resistance pattern annotation on the right -->
+  <g>
+    <rect x="720" y="460" width="140" height="32" rx="12" fill="#0A2540"/>
+    <text x="790" y="480" text-anchor="middle" font-size="9" fill="#cbd5e1" font-style="italic">"Real programmers</text>
+    <text x="790" y="491" text-anchor="middle" font-size="9" fill="#cbd5e1" font-style="italic">write machine code"</text>
+  </g>
+  <g>
+    <rect x="720" y="350" width="140" height="32" rx="12" fill="#0A2540"/>
+    <text x="790" y="370" text-anchor="middle" font-size="9" fill="#cbd5e1" font-style="italic">"Garbage collection</text>
+    <text x="790" y="381" text-anchor="middle" font-size="9" fill="#cbd5e1" font-style="italic">is too slow"</text>
+  </g>
+  <g>
+    <rect x="720" y="240" width="140" height="32" rx="12" fill="#0A2540"/>
+    <text x="790" y="260" text-anchor="middle" font-size="9" fill="#cbd5e1" font-style="italic">"You don't understand</text>
+    <text x="790" y="271" text-anchor="middle" font-size="9" fill="#cbd5e1" font-style="italic">what's under the hood"</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="450" y="705" text-anchor="middle" font-size="10" fill="#94a3b8" font-style="italic">"The question is never whether the shift happens. It's how fast you move with it."</text>
+</svg>
