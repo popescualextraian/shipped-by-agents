@@ -39,14 +39,22 @@ Training documentation for developers and teams looking to understand, adopt, an
 | 18 | Practical workflow examples and productivity tips | TBD | Pending |
 | 19 | Onboarding new team members with AI agents | TBD | Pending |
 
+## Quick Paths
+
+| # | Quick Path | Time | Status |
+|---|------------|------|--------|
+| 1 | Daily Dev Workflow — user stories, docs, diagrams, coding, testing, debugging, review, refactoring | 15 min | Done |
+
 ## Conventions
 
-- **Folder structure:** four top-level sections — `technical/`, `repository/`, `process/`, `articles/`
+- **Folder structure:** five top-level sections — `quick-paths/`, `technical/`, `repository/`, `process/`, `articles/`
 - **Technical chapters:** one folder per chapter inside `technical/` — `technical/NN_short-slug/` (e.g., `technical/01_agents-vs-assistants/`)
 - Each chapter folder contains the chapter markdown and any related assets (images, code samples)
 - The main chapter file matches the folder name (e.g., `technical/01_agents-vs-assistants/01_agents-vs-assistants.md`)
 - **Repository:** the shared repository — `repository/` with subfolders: `ideas/`, `patterns/`, `solutions/`, `lessons-learned/`
 - **Process:** one folder per document inside `process/` — `process/NN_<short-slug>/` (e.g., `process/00_shipped-by-agents-process/`)
+- **Quick Paths:** one folder per quick path inside `quick-paths/` — `quick-paths/NN_short-slug/` (e.g., `quick-paths/01_daily-dev-workflow/`)
+- Quick paths are short, actionable recipes — each section follows: What, Setup, How, Links (official docs + our chapter)
 - **Articles:** one folder per article inside `articles/` — `articles/<short-slug>/`
 - Every chapter ends with a **Resources** section linking to relevant articles, docs, and tools
 - Use ATX headings (`#`, `##`, `###`)

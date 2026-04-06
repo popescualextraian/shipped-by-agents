@@ -16,6 +16,7 @@ It helps more teams discover the guide.
 
 | Section                        | What's inside                                                                                  |
 | ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| [`quick-paths/`](quick-paths/) | Quick-start recipes — short, actionable guides for common dev tasks with AI agents             |
 | [`technical/`](technical/)     | Training materials — how agents work, prompt engineering, and agent-driven coding workflows     |
 | [`repository/`](repository/)   | Shared repository — reusable solutions, patterns, ideas, and lessons learned from teams        |
 | [`process/`](process/)         | The framework — adoption process, team roles, maturity model, and rollout playbooks            |
