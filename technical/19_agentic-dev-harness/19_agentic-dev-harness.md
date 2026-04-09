@@ -362,3 +362,205 @@ Domain: orders, inventory, payments.
 3. Run /simplify
 4. Run tests one final time
 ```
+
+## Phase 4: Implementation
+
+This is where the agent writes code. Most developers start here — open a terminal, prompt, and go. That works, but it's the hard way. If you've done phases 1-3, the agent already knows the requirements, the spec, and the architecture. It writes code that fits the system on the first pass instead of guessing and getting corrected.
+
+Implementation is where sensors earn their keep. Guides tell the agent what to write; sensors tell it what it got wrong — instantly, automatically, and without your involvement. Pre-commit hooks fire after every edit: linter, formatter, type checker. Fast unit tests run in under 30 seconds. The agent reads the output, fixes the issues, and moves on. By the time you see the code, it's already survived multiple rounds of automated correction.
+
+### Guide
+
+- **CLAUDE.md coding conventions** — naming rules, file structure, error handling patterns, forbidden patterns. The agent follows what's written; what's not written gets improvised.
+- **Code templates and scaffolding** — starter files for new services, controllers, repositories. Templates enforce structure so the agent doesn't invent its own.
+- **Module boundaries** — explicit rules about where code belongs. Without them, the agent puts things wherever seems convenient.
+- **Approved libraries list** — which dependencies are allowed. The agent will reach for whatever it's seen in training data unless you constrain it.
+
+### Sensor
+
+- **Pre-commit hooks** — linter (ESLint, Pylint, Checkstyle), formatter (Prettier, Black), type checker (TypeScript, mypy). These fire after every edit and catch syntax, style, and type errors mechanically.
+- **Fast unit tests** — run after every change, under 30 seconds. They catch broken behavior before it compounds.
+- **Agent reads hook output and self-corrects automatically** — the agent doesn't just run the checks. It reads the failure messages, understands what went wrong, and fixes the code without asking you.
+
+### Feedback Loop
+
+Agent writes code. Computational sensors fire — linter, type checker, fast tests. Failures feed back into the agent. It self-corrects. Sensors re-run. Once computational checks pass, a quality agent reviews for business logic alignment, pattern adherence, and unnecessary complexity. The agent rewrites what the quality agent flags. The quality agent re-checks. When everything passes, the developer sees clean code — not a first draft with linter warnings and type errors.
+
+### Concrete Config
+
+Hooks in `.claude/settings.json` that fire after every edit and block dangerous commands:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "npx eslint --fix $CLAUDE_FILE_PATH && npx tsc --noEmit",
+        "description": "Lint and type-check after every edit"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "command": "echo $CLAUDE_TOOL_INPUT | grep -qE 'rm -rf|--force|--no-verify' && echo 'BLOCKED: dangerous command' && exit 1 || exit 0",
+        "description": "Block destructive commands"
+      }
+    ]
+  }
+}
+```
+
+A `CLAUDE.md` instruction that wires the quality check into the workflow:
+
+```markdown
+## Implementation Rules
+After completing a feature implementation (not after every small edit):
+1. Run all hooks (they fire automatically)
+2. Run /quality-check to verify business logic alignment and pattern adherence
+3. Only present to user after /quality-check passes
+```
+
+A quality check skill at `.claude/skills/quality-check.md`:
+
+```markdown
+Review the changed files. For each:
+1. Does the error handling follow the project pattern? (see src/common/errors.ts)
+2. Are there N+1 query patterns?
+3. Is there unnecessary complexity that could be simplified?
+4. Does it follow the naming conventions in CLAUDE.md?
+Fix any issues found, then re-check. Present only when clean.
+```
+
+## Phase 5: Testing
+
+The agent doesn't just write code — it writes tests alongside the code. Unit tests validate individual functions. Integration tests verify that components work together against real dependencies. E2E tests confirm the system behaves correctly from the user's perspective. Each type catches different problems at different costs.
+
+Sensors turn testing from a manual chore into a continuous feedback loop. The test runner fires after every change. The coverage report tells the agent which lines aren't covered — and the agent adds tests until the threshold is met. Mutation testing goes further: it introduces small changes to the code and checks whether the tests catch them. Tests that pass aren't necessarily good — mutation testing reveals tests that pass only because they don't actually check anything.
+
+### Guide
+
+- **Testing conventions doc** — what to test, naming patterns, directory structure. Without this, the agent invents its own conventions for each test file.
+- **Test templates** — arrange-act-assert for unit tests, given-when-then for behavior tests. Templates enforce consistency and make tests readable.
+- **Coverage thresholds** — 80% branch coverage for new code. A concrete number gives the agent a clear stopping condition.
+- **Explicit rules** — "no mocking the database in integration tests," "use testcontainers for real database instances." The agent follows explicit constraints; without them, it defaults to mocking everything.
+
+### Sensor
+
+- **Test runner as immediate feedback loop** — the agent runs tests after every change and reads the output. Failures get fixed before they compound.
+- **Coverage report** — the agent reads uncovered lines and adds tests targeting those specific paths. No guessing about what's missing.
+- **Mutation testing (post-integration)** — tools like Stryker or PIT introduce small code mutations and check whether tests catch them. Run this after integration, not on every edit — it's slow but reveals weak tests.
+
+### Feedback Loop
+
+Agent generates tests. Runner executes them. Failures feed back. The agent fixes the tests or the code — whichever is wrong. Re-runs. All pass. Coverage check runs. Finds gaps — three functions in the service layer have no branch coverage. The agent adds tests targeting those branches. Coverage meets the threshold. The developer sees a passing, well-covered test suite — not a first draft with red tests and 40% coverage.
+
+### Concrete Config
+
+A TDD gate hook that blocks production code edits when no corresponding test file exists:
+
+```json
+{
+  "PreToolUse": [
+    {
+      "matcher": "Edit",
+      "command": "echo $CLAUDE_FILE_PATH | grep -q 'src/' && ! echo $CLAUDE_FILE_PATH | grep -q 'test' && [ ! -f \"$(echo $CLAUDE_FILE_PATH | sed 's/src/test/' | sed 's/.ts/.test.ts/')\" ] && echo 'BLOCKED: Write tests first' && exit 1 || exit 0",
+      "description": "Block production code edits without corresponding test file"
+    }
+  ]
+}
+```
+
+A `CLAUDE.md` section with testing rules for both unit and integration tests:
+
+```markdown
+## Testing
+- Write tests before implementation (TDD). Hook enforces this.
+- Naming: `describe('ClassName')` → `it('should <behavior>')`
+- Coverage threshold: 80% branch coverage for new code.
+- After writing tests, run `npm test` and check coverage. Add tests until threshold met.
+
+### Unit Tests
+- Fast (< 30s total). Run after every change.
+- Mock external dependencies (HTTP, file system), but not the database.
+
+### Integration Tests
+- Use testcontainers for real database instances.
+- Run with: `npm run test:integration` (separate from unit tests)
+- Timeout guard: 120 seconds max per test.
+- Run integration tests before presenting code to user, not on every edit.
+- For Java/Spring Boot: use @SpringBootTest with @Testcontainers.
+```
+
+An integration test hook that runs before commit:
+
+```json
+{
+  "PreToolUse": [
+    {
+      "matcher": "Bash(git commit)",
+      "command": "npm run test:integration --timeout 120000 || (echo 'BLOCKED: Integration tests failing' && exit 1)",
+      "description": "Run integration tests before commit"
+    }
+  ]
+}
+```
+
+## Phase 6: Code Review
+
+Before a human reviews the code, the agent reviews its own output. This isn't vanity — it catches issues that sensors missed. Linters catch syntax and style. Type checkers catch type errors. But neither catches "this function does three things and should be split" or "this query will be slow at scale." A review skill with a structured checklist fills the gap.
+
+The review phase chains two inferential checks. First, a review agent scans for security, performance, readability, and consistency issues using a structured checklist. The coding agent fixes everything flagged as high severity. Then a simplification agent asks "can this be simpler?" — it extracts helpers, reduces nesting, and removes dead code. Tests run after every simplification to make sure nothing breaks. The developer receives polished code, not code that works but is hard to read.
+
+### Guide
+
+- **Review checklist** — security (OWASP top 10), performance (N+1 queries, unbounded loops), readability (naming, complexity), consistency with existing codebase. A checklist makes the review systematic instead of ad hoc.
+- **Team style guide as context** — the agent reads the style guide and evaluates code against it. Consistency across the codebase matters more than any individual preference.
+- **"What to look for" doc tuned to common team mistakes** — every team has patterns that go wrong repeatedly. Document them. The agent checks for them every time.
+
+### Sensor
+
+- **Review skill that posts structured findings** — file, line, issue, severity, suggestion. Structured output makes findings actionable instead of vague.
+- **Simplification agent that rewrites for simplicity** — a separate pass focused only on "can this be simpler?" Simplification after correctness, not instead of it.
+- **Human review — always the final gate** — the agent loop reduces what the human needs to find, but never replaces human judgment on intent, business logic, and design.
+
+### Feedback Loop
+
+Review agent scans all changed files. Posts structured findings — file, line, severity, issue, fix. The coding agent applies all high-severity fixes. The review agent re-scans. Clean. Then the simplification agent checks: "Can this be simpler without changing behavior?" It extracts helpers, reduces nesting, removes dead code. Tests run after every simplification — if any test fails, that simplification gets reverted. The review agent confirms no regressions. The developer receives polished code that passed security, performance, readability, simplicity, and correctness checks before they opened the diff.
+
+### Concrete Config
+
+A review skill at `.claude/skills/review.md`:
+
+```markdown
+Review all changed files. For each file, check:
+- Security: SQL injection, XSS, hardcoded secrets, insecure deserialization
+- Performance: N+1 queries, unbounded loops, missing pagination
+- Readability: functions >30 lines, cyclomatic complexity >10, unclear naming
+- Consistency: follows patterns in existing codebase
+
+Output format per finding:
+  FILE:LINE | SEVERITY | ISSUE | FIX
+Apply all HIGH severity fixes. Re-review after fixes. Present to user only when clean.
+```
+
+A simplification skill at `.claude/skills/simplify.md`:
+
+```markdown
+Re-read the changed files asking: "Can this be simpler without changing behavior?"
+- Extract repeated patterns into helpers (only if used 3+ times)
+- Reduce nested conditionals with early returns
+- Remove dead code and unused imports
+Run tests after every change. If any test fails, revert that simplification.
+```
+
+A `CLAUDE.md` instruction that orchestrates the full pre-presentation pipeline:
+
+```markdown
+## Before Presenting Code to the User
+1. All hooks must pass (automatic)
+2. Run /review — fix until clean
+3. Run /simplify — simplify where possible
+4. Run tests one final time
+5. Then present the result
+```
