@@ -808,3 +808,158 @@ How to track:
 - Review monthly. If defects in human review aren't decreasing, your guides need improvement.
 
 The harness improves itself: every defect found in human review that could have been caught by a sensor becomes a new guide or sensor. This is Fowler's "mechanical enforcement instead of hope" — the measurement loop closes the circle.
+
+## Debugging the Harness
+
+The harness itself can break. Hooks can fail silently, skills can conflict with CLAUDE.md, and a misconfigured sensor can block legitimate work or let bad code through.
+
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| Hook runs but agent ignores output | Hook exits 0 on failure (should exit 1) | Check exit codes — non-zero blocks the agent |
+| Agent skips a skill it should run | CLAUDE.md instruction is vague | Make it imperative: "Run /review. Do not present code until it passes." |
+| Skill and CLAUDE.md contradict | Different rules in each | Single source of truth — CLAUDE.md wins, update skill to reference it |
+| Hook blocks legitimate actions | Overly broad regex matcher | Narrow the matcher pattern, add exceptions |
+| Agent loops endlessly | No max iteration limit | Add circuit breaker: "max 3 attempts, then escalate" |
+| Hook works locally but fails in worktree | Hardcoded paths | Use `$CLAUDE_FILE_PATH` and project-relative paths |
+
+**How to test a harness change:**
+
+1. Make the change to `settings.json` or skill file
+2. Start a new Claude Code session (hooks reload on session start)
+3. Give the agent a small task that should trigger the change
+4. Watch output — use `--verbose` for hook execution details
+5. If it works, commit. If not, revert and iterate.
+
+> Treat the harness like code. Version it in git, review changes, test before deploying.
+
+## Progress Monitoring
+
+When an agent runs a multi-phase feedback loop, you need visibility. Staring at scrolling terminal output isn't enough.
+
+**Status line.** Claude Code has a built-in status line — a customizable bar at the bottom of the terminal. Community plugins like claude-dashboard add context progress bars, cost tracking, rate limits, and cache hit rates.
+
+**Task-based progress.** Claude Code's task system can report progress inside skills. Define phases up front and let the agent mark them complete as it goes:
+
+```markdown
+# In your /build-feature skill:
+When starting work, create tasks for each phase:
+- [ ] Spec review
+- [ ] Implementation
+- [ ] Tests passing
+- [ ] Code review clean
+- [ ] Quality gate passed
+Mark each complete as you finish it. User sees progress in real-time.
+```
+
+**Agent monitoring.** For multi-agent workflows, Claude HUD shows which agents are running, their current task, and elapsed time. When you have three agents working in parallel worktrees, this tells you which one is stuck and which one is done.
+
+> You don't need a UI. The terminal is the interface. But you DO need visibility into where the loop is and what's blocking it.
+
+## Quick Restart Loops
+
+One of the biggest advantages of a harness: go from idea to working code in an hour. Don't like it? Modify the statement and retry.
+
+The pattern:
+
+```
+State intent → Agent runs full harness → Review result → Not happy?
+    → Refine intent → Agent reruns → Review → ... → Ship
+```
+
+This is NOT debugging. It's intent iteration — refining what you asked for, not fixing bugs. The harness ensures each attempt is clean because every retry goes through the same guides and sensors.
+
+**What makes this fast:**
+
+1. **Front-loaded harness** — each retry is quality-checked automatically. No manual cleanup between attempts.
+2. **Spec as input** — modify the spec and rerun. The agent reads fresh instructions, not patched context.
+3. **Git worktrees** — retry in a fresh worktree, keep the previous attempt for comparison. No branch juggling.
+4. **Cheap failures** — a 1-hour agent run costs $0.50-2.00. That's cheaper than 4 hours of manual rework.
+
+**CLAUDE.md restart protocol:**
+
+```markdown
+## Restart Protocol
+When the user says "retry" or "start over with different approach":
+1. Read the updated spec/instructions
+2. Start fresh — do not patch the previous attempt
+3. Run the full harness (tests, review, quality gate)
+4. Present the new result alongside a brief diff from the previous attempt
+```
+
+> The harness makes restarts safe. Without it, a restart risks introducing new issues. With it, every attempt goes through the same quality gates.
+
+## Challenges
+
+The harness works for local development. But some scenarios break the local model.
+
+### Cloud Infrastructure Testing
+
+Local sensors can't fully validate cloud-dependent code. You need a strategy for testing Lambda functions, managed databases, and third-party APIs.
+
+| Approach | Tradeoff |
+|----------|----------|
+| Local emulation (SAM local, LocalStack, Azurite) | Fast, free, but not 100% parity. Good for 80% of cases. |
+| Ephemeral cloud environments | Real infrastructure, spun up per test run. Accurate but costs money. |
+| Contract testing | Test against API contracts. Fast but doesn't catch runtime issues. |
+| Cloud-connected agents | Agent deploys to dev environment. AWS Agent Plugin for Serverless handles this. |
+
+CLAUDE.md guidance for integration testing:
+
+```markdown
+## Integration Testing
+- For database tests: use testcontainers (local Docker)
+- For Lambda/serverless: use SAM local for unit-level, deploy to dev for integration
+- For external APIs: contract tests locally, real integration in CI
+- Always set timeouts: 120s max per integration test
+```
+
+### Credential Management
+
+Agents need API keys to call external services, run deployments, or query quality gates. Don't hardcode them. Use environment variables, vault references, or scoped tokens with minimal permissions. The agent should never see raw credentials in `CLAUDE.md` or skill files — reference them through `$ENV_VARS` that are set outside the repo.
+
+### Large Monorepos
+
+Hooks that scan the entire repo slow down on 50k+ files. Scope hooks to changed files only using `$CLAUDE_FILE_PATH` instead of running linters or tests across the whole codebase. If a hook takes more than 5 seconds, it's too slow for a feedback loop — developers will start ignoring it, and the harness loses its teeth.
+
+### Flaky Tests
+
+Flaky tests poison the feedback loop. The agent sees a failure, tries to fix code that isn't broken, introduces a real bug, and the loop spirals. Fix flaky tests first. A flaky test is worse than no test in an automated loop — it generates false signals that waste tokens and time.
+
+## Lightweight Telemetry
+
+You can't improve what you don't measure. But heavy observability is overkill for a local harness — you need just enough data to spot patterns and adjust.
+
+| Event | How | What It Tells You |
+|-------|-----|-------------------|
+| Phase start/end | Hook logs timestamp + phase to `.claude/metrics.log` | Where bottlenecks are |
+| Sensor pass/fail | Hook appends result to log | Which sensors fail most |
+| Self-correction count | Skill increments counter on retry | Passes before convergence |
+| Token usage per session | Status line plugin or dashboard | Cost per feature |
+| Quality gate results | SonarQube MCP response logged | First-pass rate |
+
+**Telemetry hook:**
+
+```json
+{
+  "PostToolUse": [
+    {
+      "matcher": "Edit|Write|Bash",
+      "command": "echo \"$(date +%Y-%m-%dT%H:%M:%S) | $CLAUDE_TOOL_NAME | $CLAUDE_FILE_PATH\" >> .claude/metrics.log",
+      "description": "Log tool usage for telemetry"
+    }
+  ]
+}
+```
+
+**Weekly review skill** (`.claude/skills/weekly-metrics.md`):
+
+```markdown
+Read .claude/metrics.log. Summarize:
+1. Total tool calls this week (by type: Edit, Write, Bash)
+2. Most edited files (hotspots)
+3. Average session duration (first to last entry per day)
+4. Sensor failure count (grep for BLOCKED or FAILED in log)
+Present a brief report: what's improving, what's getting worse, what to adjust.
+```
+
+> The goal is not dashboards — it's feedback. Review the log weekly, spot patterns, adjust the harness.
