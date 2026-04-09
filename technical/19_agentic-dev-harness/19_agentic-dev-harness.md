@@ -17,7 +17,7 @@ A harness steers the agent through two types of controls:
 - `CLAUDE.md` rules ("All services must be stateless")
 - Spec templates that define what "done" looks like
 - Architectural constraints ("Use the repository pattern for data access")
-- Approved library lists ("Use `zod` for validation, not `joi`")
+- Approved library lists ("Use SLF4J for logging, not java.util.logging")
 
 **Sensors (feedback controls)** work like speed cameras. They check *after* the agent acts and enable self-correction.
 
@@ -49,7 +49,7 @@ This chapter focuses on the harness approach. It gives you direct control over t
 
 ## How This Works in Claude Code
 
-Claude Code has no workflow engine. The harness is assembled from four mechanisms:
+Claude Code has no workflow engine (yet). The harness is assembled from four mechanisms:
 
 | Mechanism | Role | Runs... | Example |
 |-----------|------|---------|---------|
@@ -58,9 +58,27 @@ Claude Code has no workflow engine. The harness is assembled from four mechanism
 | **Skills** | Inferential checks — reusable prompts | On invocation (manual or instructed by CLAUDE.md) | `/review` checks OWASP top 10, `/simplify` reduces complexity |
 | **Subagents** | Independent workers — spawn for specific tasks | Programmatically by the agent | Spawn a code reviewer agent, spawn a test generator |
 
+A key advantage of subagents goes beyond specialized "personas." Each subagent starts with a **fresh context window** — it doesn't inherit the main agent's accumulated conversation, assumptions, or mistakes. This matters more than it sounds. After a long implementation session, the main agent's context is polluted with failed attempts, corrections, and abandoned approaches. If you ask *that same agent* to review its own work, it's biased — it remembers why it made each decision and won't question them. A review subagent sees only the final code, with clean eyes. It catches things the main agent is blind to.
+
+The same applies to test generation — a subagent won't mirror the implementation's blind spots because it never saw the implementation reasoning. And crucially, the isolation goes both ways: the subagent's work doesn't pollute the main agent's context either, keeping it focused and efficient. This is why Chapter 6 recommends starting a fresh session for reviews, and why the community patterns (vinicius91carvalho's three-agent model) enforce strict separation: the Orchestrator plans, the Executor codes, the Reviewer audits — each in its own context, never crossing streams.
+
 > **Hooks can't be bypassed by the agent** — they're mechanical enforcement. CLAUDE.md can be ignored (the agent might "forget"). Use hooks for hard rules, CLAUDE.md for guidance, skills for judgment calls.
 
 <img src="./harness-overview.svg" width="100%"/>
+
+Here's what each guide and sensor means in practice:
+
+| Phase | Guide (steers before) | Example | Sensor (checks after) | Example |
+|-------|----------------------|---------|----------------------|---------|
+| Conception | CLAUDE.md context | `## Project Context` section describing domain, constraints, team conventions | Checklist | Skill that verifies: acceptance criteria? Edge cases? Non-functionals? |
+| Specification | Spec templates | Markdown template with required sections: overview, API contract, error handling | Review skill | `/review-spec` flags vague language ("should handle errors appropriately"), missing sections, TODOs |
+| Design | ADRs | `docs/adrs/003-use-events-between-modules.md` — agent reads past decisions before proposing new ones | Fitness check | `/check-architecture` verifies no module boundary violations, no layer skipping |
+| Implementation | Hooks | `PostToolUse` hook runs ESLint + TypeScript compiler after every edit — agent self-corrects | Linter/Tests | ESLint catches unused imports, `tsc` catches type errors, fast unit tests catch regressions |
+| Testing | Test rules | CLAUDE.md says "80% branch coverage, no mocking the DB, use testcontainers" | Coverage | Test runner reports 72% coverage → agent adds edge-case tests until 80% met |
+| Review | Checklist | `/review` skill checks: OWASP top 10, N+1 queries, functions >30 lines, naming | Review agent | Structured output: `src/order.ts:42 \| HIGH \| N+1 query in loop \| Use batch fetch` |
+| Quality Gates | SonarQube rules | Quality profile with severity thresholds, security scan policies | Quality gate | Agent calls SonarQube MCP → reads "FAILED: 3 code smells" → fixes → re-scans → passes |
+| Optimization | Budgets | "Cyclomatic complexity < 10 per function, response time < 200ms" | Benchmarks | `/simplify` reduces 40-line function to 25 lines, tests confirm no regression |
+| Maintenance | Log docs | Error code reference, doc structure guide, dependency update policies | Doc sync | Hook reminds "check if docs/ need updating" after source file edits |
 
 ## The Compounding Effect
 
@@ -86,11 +104,70 @@ Maintain    ██                  ← lightest touch, mostly monitoring
 
 Invest most in the early guides. The goal is not zero checks at the end — sensors always stay on. But the agent self-corrects less because it got better input. When CLAUDE.md is clear, the spec is tight, and the design is agreed upon, the code phase produces fewer mistakes. The test phase catches less. The review phase has less to flag. Fewer review cycles means faster delivery.
 
+## Integrating External Sources
+
+The early phases — conception, specification, design — depend on knowledge that lives outside your codebase: API docs, architecture diagrams, compliance requirements, meeting notes, vendor specs, Confluence pages. The agent can't reason about what it can't see.
+
+The simplest approach works best. Following Karpathy's advice: **keep it simple.** Don't reach for complex MCP servers, RAG pipelines, or vector databases until you've outgrown the basics. For most projects, the basics are enough.
+
+### Put Your Documents Next to the Project
+
+Create a `docs/` or `context/` folder in your repo. Copy in the documents the agent needs:
+
+```
+context/
+├── api-specs/           # OpenAPI specs, API contracts
+├── architecture/        # ADRs, system diagrams, ERDs
+├── requirements/        # PRDs, user stories, compliance docs
+├── vendor/              # Third-party SDK docs, integration guides
+└── domain/              # Business glossary, process descriptions
+```
+
+These are plain files — markdown, PDF, text. The agent reads them directly. No indexing infrastructure, no API keys, no external services.
+
+### Reference It in CLAUDE.md
+
+Tell the agent where to look:
+
+```markdown
+## External Sources
+Before designing or implementing, check these folders for relevant context:
+- `context/api-specs/` — API contracts for all services we integrate with
+- `context/architecture/` — ADRs and system diagrams. Read before proposing new components.
+- `context/requirements/` — PRDs and compliance docs. Check before adding features.
+- `context/vendor/` — SDK docs for Stripe, AWS, Auth0. Read before using their APIs.
+- `context/domain/` — Business glossary. Use these terms, not your own.
+```
+
+### Add a Search Skill for Larger Collections
+
+When `context/` grows beyond a few dozen files, add a skill to find relevant documents:
+
+```markdown
+Search the context/ folder for information about the given topic.
+1. List files whose names match the topic
+2. Grep for keywords across all files in context/
+3. Read the top 3 most relevant files
+4. Summarize what you found and how it applies to the current task
+If nothing relevant found, say so — don't guess.
+```
+
+### When to Add Complexity
+
+Move beyond local files when:
+- Documents change frequently and you can't keep copies in sync → **MCP server** to query Confluence/Notion live
+- You have thousands of documents and search by filename/grep isn't enough → **RAG pipeline** with embeddings
+- You need real-time data (monitoring, logs, dashboards) → **MCP server** with API access
+
+But start with files in a folder. It's fast, it's free, it works offline, and the agent reads it natively. Add complexity when you hit a real limitation, not before.
+
 ## Phase 1: Conception and Requirements
 
 This is where you brainstorm features, explore constraints, and discuss trade-offs with the agent. You're not writing code yet — you're figuring out what to build and why. The agent becomes a thinking partner: it asks questions you forgot, surfaces edge cases you missed, and structures the mess of ideas into something actionable.
 
 This phase has the most leverage of any in the SDLC. A wrong requirement is 100x more expensive to fix in production than to catch here. Front-load your guidance investment. Give the agent rich context about your project, your domain, and your constraints — and it will ask better questions, spot more gaps, and produce requirements that actually hold up.
+
+> **Sometimes asking the right question pays more than any implementation.** An agent asked to "implement a health check endpoint" might produce a solution with multiple database connections, a caching layer, and two SQS queues for async status aggregation. Technically correct. But if the scope is a simple ping that returns 200 OK — that's overengineered by an order of magnitude. The conception phase is where you catch this: "Does this complexity fit the scope?" is the single most valuable question you can ask before the agent starts building. Agents are eager to build. Your job is to make sure they build the right amount.
 
 ### Guide
 
@@ -110,7 +187,7 @@ A `CLAUDE.md` snippet that sets project context and points the agent to the brai
 
 ```markdown
 ## Project Context
-This is an e-commerce platform (Java/Spring Boot backend, React frontend).
+This is an e-commerce platform (Node.js/Express backend, React frontend, TypeScript throughout).
 Domain: orders, inventory, payments. Key constraint: PCI compliance for payment data.
 Before implementing any feature, brainstorm requirements using /brainstorm.
 ```
@@ -124,6 +201,7 @@ Ask clarifying questions one at a time. For each feature, cover:
 3. Edge cases and error scenarios?
 4. Non-functional requirements (performance, security, compliance)?
 5. Does this conflict with existing features?
+6. Does the proposed complexity fit the scope? Challenge overengineered solutions.
 Output a structured requirements doc in docs/requirements/.
 ```
 
@@ -269,20 +347,9 @@ Four types of human integration:
 
 ### Calibrating the Human-Automation Balance
 
-Three concepts govern how much human attention each change gets.
+Two concepts govern how much human attention each change gets.
 
-**1. Risk-based review depth**
-
-| Change Type | Risk | Human Review Level |
-|---|---|---|
-| Rename, formatting, import cleanup | Low | Glance at diff, trust sensors |
-| New utility function, test additions | Medium | Read the code, verify intent |
-| Payment flow, auth logic, data migration | High | Line-by-line review, test manually |
-| Architecture change, new external dependency | Critical | Design discussion before agent starts |
-
-The harness treats all changes equally — every sensor fires on every change. But the human calibrates attention based on risk. A renamed variable that passes all sensors gets a five-second scan. A payment flow change gets a careful read, even if sensors are green.
-
-**2. Escalation paths**
+**1. Escalation paths**
 
 Sometimes the loop doesn't converge. The agent fixes one thing, breaks another, fixes that, breaks the first. Three escalation rules prevent infinite loops:
 
@@ -299,7 +366,7 @@ Encode escalation rules in `CLAUDE.md` so the agent knows when to stop:
 - If quality gate findings point to an architectural issue, escalate — don't band-aid.
 ```
 
-**3. The trust dial**
+**2. The trust dial**
 
 Trust is not a switch — it's a dial you turn over time as evidence accumulates:
 
@@ -318,52 +385,6 @@ Four strategies compound to reduce the number of human-agent round trips:
 2. **Chaining sensors** — Computational sensors fire first (fast, cheap). Inferential sensors fire second (slower, smarter). Humans review last (slowest, most expensive). Each layer catches what the previous layer missed.
 3. **Evolving the harness** — Every mistake becomes a new guide or sensor. Mechanical enforcement instead of hope. The harness gets better every week.
 4. **Convergence criteria** — Each phase has a clear "done" condition. The agent knows when to stop iterating and present results. No ambiguity, no over-polishing.
-
-### Parallel Execution with Worktrees
-
-For larger features, you can run multiple agent sessions in parallel. Each session gets its own git worktree — an isolated copy of the repo with its own branch and the full harness active. Split a feature into three independent tasks, launch three agents, and merge the results. This works well for tasks that don't touch the same files: one agent builds the API endpoints, another writes the frontend components, a third sets up the database migrations. Don't use it for tightly coupled work where one agent's output depends on another's — the merge conflicts aren't worth it.
-
-```bash
-# Create three worktrees for parallel development
-git worktree add ../feature-api   feature/api-endpoints
-git worktree add ../feature-ui    feature/ui-components
-git worktree add ../feature-db    feature/db-migrations
-
-# Launch an agent in each (each gets its own CLAUDE.md, hooks, skills)
-cd ../feature-api && claude "Implement the order API endpoints per spec"
-cd ../feature-ui  && claude "Build the order form components per spec"
-cd ../feature-db  && claude "Create the order tables migration per spec"
-```
-
-### Sample Configuration
-
-Here's a complete `CLAUDE.md` that encodes conventions from phases 1 through 3. It combines project context, coding conventions, module boundaries, testing rules, and the autonomous loop instruction:
-
-```markdown
-## Project Context
-E-commerce platform. Java/Spring Boot backend, React frontend.
-Domain: orders, inventory, payments.
-
-## Coding Conventions
-- Use TypeScript strict mode. No `any` types.
-- Error handling: throw typed errors from src/common/errors.ts
-- Naming: camelCase for variables, PascalCase for classes, kebab-case for files
-
-## Module Boundaries
-- orders/ cannot import from payments/ — use events
-- All services must be stateless
-
-## Testing
-- TDD required. Write tests before implementation.
-- Coverage threshold: 80% branch coverage
-- No mocking the database in integration tests
-
-## Before Presenting Code
-1. All hooks must pass
-2. Run /review
-3. Run /simplify
-4. Run tests one final time
-```
 
 ## Phase 4: Implementation
 
@@ -398,20 +419,30 @@ Hooks in `.claude/settings.json` that fire after every edit and block dangerous 
     "PostToolUse": [
       {
         "matcher": "Edit|Write",
-        "command": "npx eslint --fix $CLAUDE_FILE_PATH && npx tsc --noEmit",
-        "description": "Lint and type-check after every edit"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(cat | jq -r '.tool_input.file_path') && npx eslint --fix \"$FILE\" && npx tsc --noEmit"
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "command": "echo $CLAUDE_TOOL_INPUT | grep -qE 'rm -rf|--force|--no-verify' && echo 'BLOCKED: dangerous command' && exit 1 || exit 0",
-        "description": "Block destructive commands"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CMD=$(cat | jq -r '.tool_input.command') && echo \"$CMD\" | grep -qE 'rm -rf|--force|--no-verify' && echo 'BLOCKED: dangerous command' >&2 && exit 2 || exit 0"
+          }
+        ]
       }
     ]
   }
 }
 ```
+
+> **Hook format:** Each hook receives a JSON object on stdin with fields like `tool_name`, `tool_input`, and `session_id`. Parse it with `jq`. Exit code `2` blocks the action (PreToolUse only); exit `0` allows it. The `matcher` filters by tool name; use the `if` field for argument-level filtering (e.g., `"if": "Bash(git commit)"`).
 
 A `CLAUDE.md` instruction that wires the quality check into the workflow:
 
@@ -432,6 +463,83 @@ Review the changed files. For each:
 3. Is there unnecessary complexity that could be simplified?
 4. Does it follow the naming conventions in CLAUDE.md?
 Fix any issues found, then re-check. Present only when clean.
+```
+
+### Parallel Execution with Worktrees
+
+For larger features, you can run multiple agent sessions in parallel. Each session gets its own git worktree — an isolated copy of the repo with its own branch and the full harness active. Split a feature into three independent tasks, launch three agents, and merge the results. This works well for tasks that don't touch the same files: one agent builds the API endpoints, another writes the frontend components, a third sets up the database migrations. Don't use it for tightly coupled work where one agent's output depends on another's — the merge conflicts aren't worth it.
+
+**Claude Code has built-in worktree support.** When spawning a subagent, set `isolation: "worktree"` — Claude Code automatically creates a temporary worktree, runs the agent in it, and returns the branch and path when done. No manual `git worktree add` needed:
+
+```text
+// Claude Code's subagent API — used inside skills and orchestrators
+Agent({
+  description: "Implement order API endpoints",
+  isolation: "worktree",
+  prompt: "Implement the order API endpoints per spec at docs/specs/orders.md"
+})
+```
+
+The worktree is cleaned up automatically if the agent makes no changes. If it does make changes, you get back the branch name and worktree path to review and merge.
+
+You can also run subagents in the **background** (`run_in_background: true`) — they work asynchronously while you continue in your main session. When done, you get notified with results. Combine background + worktree for maximum parallelism:
+
+```text
+// Launch three independent agents in parallel, each in its own worktree
+Agent({ description: "Build API", isolation: "worktree", run_in_background: true,
+        prompt: "Implement order API endpoints per spec" })
+Agent({ description: "Build UI",  isolation: "worktree", run_in_background: true,
+        prompt: "Build order form components per spec" })
+Agent({ description: "Build DB",  isolation: "worktree", run_in_background: true,
+        prompt: "Create order tables migration per spec" })
+```
+
+For manual worktree management (multiple terminal windows, different models per task):
+
+```bash
+# Create three worktrees manually
+git worktree add ../feature-api   feature/api-endpoints
+git worktree add ../feature-ui    feature/ui-components
+git worktree add ../feature-db    feature/db-migrations
+
+# Launch an agent in each (each gets its own CLAUDE.md, hooks, skills)
+cd ../feature-api && claude "Implement the order API endpoints per spec"
+cd ../feature-ui  && claude "Build the order form components per spec"
+cd ../feature-db  && claude "Create the order tables migration per spec"
+```
+
+For deeper coverage of multi-agent orchestration patterns — agent-orchestrated vs human-orchestrated, single-responsibility agents, the cumulative error problem — see **Chapter 8: Multi-Agent Workflows**.
+
+> **What's coming:** Claude's Agent Teams feature and swarm-style coordination could take this further — multiple agents collaborating on the same task with shared state, not just parallel worktrees on independent tasks. As of writing, these capabilities are in beta and not yet stable enough to build a harness around. When they mature, the parallel execution section of this chapter will expand significantly.
+
+### Sample Configuration
+
+Here's a complete `CLAUDE.md` that encodes conventions for the implementation phase. It combines project context, coding conventions, module boundaries, testing rules, and the autonomous loop instruction:
+
+```markdown
+## Project Context
+E-commerce platform. Node.js/Express backend, React frontend, TypeScript throughout.
+Domain: orders, inventory, payments.
+
+## Coding Conventions
+- Use TypeScript strict mode. No `any` types.
+- Error handling: throw typed errors from src/common/errors.ts
+- Naming: camelCase for variables, PascalCase for classes, kebab-case for files
+
+## Module Boundaries
+- orders/ cannot import from payments/ — use events
+- All services must be stateless
+
+## Testing
+- TDD required. Write tests before implementation.
+- Coverage threshold: 80% branch coverage
+- No mocking the database in integration tests
+
+## Before Presenting Code
+1. All hooks must pass
+2. Run /review
+3. Run /simplify
+4. Run tests one final time
 ```
 
 ## Phase 5: Testing
@@ -459,17 +567,24 @@ Agent generates tests. Runner executes them. Failures feed back. The agent fixes
 
 ### Concrete Config
 
-A TDD gate hook that blocks production code edits when no corresponding test file exists:
+A coverage gate hook that blocks commits when coverage drops below threshold:
 
 ```json
 {
-  "PreToolUse": [
-    {
-      "matcher": "Edit",
-      "command": "echo $CLAUDE_FILE_PATH | grep -q 'src/' && ! echo $CLAUDE_FILE_PATH | grep -q 'test' && [ ! -f \"$(echo $CLAUDE_FILE_PATH | sed 's/src/test/' | sed 's/.ts/.test.ts/')\" ] && echo 'BLOCKED: Write tests first' && exit 1 || exit 0",
-      "description": "Block production code edits without corresponding test file"
-    }
-  ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "if": "Bash(git commit)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx jest --coverage --coverageReporters=json-summary && node -e \"const c=require('./coverage/coverage-summary.json').total.branches.pct; if(c<80){console.error('BLOCKED: Branch coverage '+c+'% < 80%'); process.exit(2)}\""
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -477,7 +592,7 @@ A `CLAUDE.md` section with testing rules for both unit and integration tests:
 
 ```markdown
 ## Testing
-- Write tests before implementation (TDD). Hook enforces this.
+- Write tests before implementation (TDD).
 - Naming: `describe('ClassName')` → `it('should <behavior>')`
 - Coverage threshold: 80% branch coverage for new code.
 - After writing tests, run `npm test` and check coverage. Add tests until threshold met.
@@ -491,20 +606,27 @@ A `CLAUDE.md` section with testing rules for both unit and integration tests:
 - Run with: `npm run test:integration` (separate from unit tests)
 - Timeout guard: 120 seconds max per test.
 - Run integration tests before presenting code to user, not on every edit.
-- For Java/Spring Boot: use @SpringBootTest with @Testcontainers.
+- For Java/Spring Boot projects: use @SpringBootTest with @Testcontainers.
 ```
 
 An integration test hook that runs before commit:
 
 ```json
 {
-  "PreToolUse": [
-    {
-      "matcher": "Bash(git commit)",
-      "command": "npm run test:integration --timeout 120000 || (echo 'BLOCKED: Integration tests failing' && exit 1)",
-      "description": "Run integration tests before commit"
-    }
-  ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "if": "Bash(git commit)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run test:integration --timeout 120000 || (echo 'BLOCKED: Integration tests failing' >&2 && exit 2)"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -556,16 +678,59 @@ Re-read the changed files asking: "Can this be simpler without changing behavior
 Run tests after every change. If any test fails, revert that simplification.
 ```
 
-A `CLAUDE.md` instruction that orchestrates the full pre-presentation pipeline:
+### Risk-Based Review Depth
+
+The harness treats all changes equally — every sensor fires on every change. But the human calibrates attention based on risk. A renamed variable that passes all sensors gets a five-second scan. A payment flow change gets a careful read, even if sensors are green.
+
+| Change Type | Risk | Human Review Level |
+|---|---|---|
+| Rename, formatting, import cleanup | Low | Glance at diff, trust sensors |
+| New utility function, test additions | Medium | Read the code, verify intent |
+| Payment flow, auth logic, data migration | High | Line-by-line review, test manually |
+| Architecture change, new external dependency | Critical | Design discussion before agent starts |
+
+Don't rely on the human to assess risk manually. Add a `/flag-review` skill that scans what changed and signals the review level:
+
+```markdown
+Analyze all changed files. Classify each by risk:
+- HIGH: changes to auth, payments, encryption, data migration, user data handling,
+  external API integrations, security middleware, permission checks
+- MEDIUM: new business logic, new endpoints, database queries, configuration changes
+- LOW: renames, formatting, test additions, documentation, dependency version bumps
+
+For HIGH risk changes:
+- Add a `// REVIEW:HIGH — <reason>` comment at the top of each changed function
+- List all HIGH items in your response with file, line, and why it's flagged
+
+For MEDIUM risk changes:
+- Mention them in your response summary
+
+For LOW risk changes:
+- No action needed, just report "all low-risk"
+```
+
+This extends the basic "Before Presenting Code" pipeline from Phase 4's Sample Configuration with risk classification and review markers:
 
 ```markdown
 ## Before Presenting Code to the User
 1. All hooks must pass (automatic)
 2. Run /review — fix until clean
 3. Run /simplify — simplify where possible
-4. Run tests one final time
-5. Then present the result
+4. Run /flag-review — classify changes by risk and add review markers
+5. Run tests one final time
+6. Then present the result with the risk summary at the top
 ```
+
+Now when the agent presents its work, the developer sees a summary like:
+
+```
+🔴 HIGH: src/payment/charge.ts:42 — modified credit card tokenization logic
+🔴 HIGH: src/auth/middleware.ts:18 — changed session validation
+🟡 MEDIUM: src/orders/service.ts:95 — new endpoint for order cancellation
+🟢 LOW: 4 files — renames and import cleanup
+```
+
+The developer knows instantly where to focus. The `// REVIEW:HIGH` comments in the code serve as bookmarks — they survive the conversation and show up in PRs, code search, and IDE navigation.
 
 ## Phase 7: Quality Gates
 
@@ -686,13 +851,19 @@ A doc-sync hook that reminds about documentation after source edits:
 
 ```json
 {
-  "PostToolUse": [
-    {
-      "matcher": "Edit",
-      "command": "echo $CLAUDE_FILE_PATH | grep -q 'src/' && echo 'REMINDER: Check if docs/ need updating for this change' || exit 0",
-      "description": "Remind about doc-code sync after source edits"
-    }
-  ]
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FILE=$(cat | jq -r '.tool_input.file_path') && echo \"$FILE\" | grep -q 'src/' && echo 'REMINDER: Check if docs/ need updating for this change' || exit 0"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
@@ -726,6 +897,8 @@ Agent feedback loops burn tokens. Every time a sensor calls back into the LLM �
 | Multi-pass feedback loop (review → fix → re-review) | ~$0.10-0.50 per cycle | 1-3 minutes | Feature work, not one-line fixes |
 | SonarQube MCP round-trip | Free (tool) + ~$0.05 (agent reads/fixes) | 30-60 seconds | Before presenting code to user |
 | Full pipeline (all inferential sensors) | ~$0.50-2.00 per feature | 5-10 minutes | Complex features, high-risk changes |
+
+> Cost estimates assume Sonnet-tier pricing. Opus-tier models cost roughly 5-10x more per run — factor this in when choosing which model runs your feedback loops.
 
 ### Rules of Thumb
 
@@ -787,8 +960,6 @@ The harness lives in the repo. This makes it shareable.
 2. **Document the harness.** Add a "Development Harness" section to your README or contributing guide. Explain what hooks fire, what skills are available, and how feedback loops work.
 3. **Onboard incrementally.** Don't mandate the full harness on day 1. Start by sharing `CLAUDE.md`. Then hooks. Then skills. Let people see the value at each step before adding more.
 4. **Harness as team contract.** Over time, the harness encodes team standards — what "done" means, what quality looks like, how code is reviewed. It becomes a living style guide that's enforced, not just documented.
-
-This directly addresses what the old Chapter 19 was going to cover — the harness IS the onboarding tool.
 
 ## Measuring the Harness
 
@@ -870,12 +1041,60 @@ State intent → Agent runs full harness → Review result → Not happy?
 
 This is NOT debugging. It's intent iteration — refining what you asked for, not fixing bugs. The harness ensures each attempt is clean because every retry goes through the same guides and sensors.
 
-**What makes this fast:**
+### Automatic Checkpoints
 
-1. **Front-loaded harness** — each retry is quality-checked automatically. No manual cleanup between attempts.
-2. **Spec as input** — modify the spec and rerun. The agent reads fresh instructions, not patched context.
-3. **Git worktrees** — retry in a fresh worktree, keep the previous attempt for comparison. No branch juggling.
-4. **Cheap failures** — a 1-hour agent run costs $0.50-2.00. That's cheaper than 4 hours of manual rework.
+Before you can restart safely, you need save points. Add a hook that creates automatic git checkpoints — lightweight commits or tags at key moments so you can roll back to any known-good state without losing everything.
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "if": "Bash(npm test|pytest|dotnet test|mvn test)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git add -A && git commit -m 'checkpoint: tests passing' 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+This creates a commit every time tests pass. If the agent goes off track in the next phase, you roll back:
+
+```bash
+# See all checkpoints
+git log --oneline --grep="checkpoint"
+
+# Roll back to the last good state
+git reset --soft HEAD~3  # undo last 3 commits, keep changes staged
+```
+
+You can also use **tags for phase boundaries** — mark the moment when spec is done, design is done, implementation passes tests:
+
+```markdown
+## Checkpoint Rules
+After completing each phase, create a git tag:
+- After spec approved: `git tag spec-done-YYYY-MM-DD`
+- After tests pass: `git tag tests-green-YYYY-MM-DD`
+- After quality gate passes: `git tag quality-passed-YYYY-MM-DD`
+This gives you named rollback points. If Phase 6 (review) reveals a design flaw,
+roll back to `spec-done` and retry from there — not from scratch.
+```
+
+The key insight: **checkpoints turn "start over" into "rewind to here."** Instead of losing an hour of work, you lose ten minutes. Combined with the harness, each checkpoint is a known-good state — tests passed, sensors clean. You're not rolling back to a broken state.
+
+**What makes restarts fast:**
+
+1. **Checkpoints** — roll back to the last good state, not to zero. Ten minutes lost, not an hour.
+2. **Front-loaded harness** — each retry is quality-checked automatically. No manual cleanup between attempts.
+3. **Spec as input** — modify the spec and rerun. The agent reads fresh instructions, not patched context.
+4. **Git worktrees** — retry in a fresh worktree, keep the previous attempt for comparison. No branch juggling.
+5. **Cheap failures** — a 1-hour agent run costs $0.50-2.00. That's cheaper than 4 hours of manual rework.
 
 **CLAUDE.md restart protocol:**
 
@@ -888,7 +1107,50 @@ When the user says "retry" or "start over with different approach":
 4. Present the new result alongside a brief diff from the previous attempt
 ```
 
-> The harness makes restarts safe. Without it, a restart risks introducing new issues. With it, every attempt goes through the same quality gates.
+### Learn and Improve
+
+The real power of quick restarts isn't just retrying — it's that each attempt teaches you something. Don't throw away a failed attempt without extracting what went wrong. A `/lessons-learned` skill closes this loop:
+
+```markdown
+Analyze the current session. Identify:
+1. What did the harness catch correctly? (guides/sensors that worked)
+2. What did the harness miss? (issues found only during human review)
+3. What was overengineered or off-scope? (complexity that didn't fit)
+4. What CLAUDE.md rules, hooks, or skills would have prevented these issues?
+Propose specific harness updates:
+- New lines to add to CLAUDE.md
+- New hooks to add to settings.json
+- New skills to create or modify
+Output to docs/lessons-learned/YYYY-MM-DD-<topic>.md
+```
+
+The cycle becomes: **retry → learn → improve harness → next attempt is better.** Over time, your harness absorbs your judgment. The same mistake never happens twice.
+
+**Session tracking for traceability:**
+
+Name your worktree branches with task IDs (`feature/JIRA-123-payment-flow`) so you can trace which session produced which result. Add a session-start hook to log task context:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"$(date +%Y-%m-%dT%H:%M:%S) | SESSION_START | $(git branch --show-current)\" >> .claude/metrics.log"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+This gives you a timeline: which sessions worked, which were restarted, and what lessons came from each. When you run `/lessons-learned`, it can reference the session log to show patterns across attempts.
+
+> The harness makes restarts safe. Without it, a restart risks introducing new issues. With it, every attempt goes through the same quality gates — and every failed attempt makes the next one better.
 
 ## Challenges
 
@@ -943,13 +1205,19 @@ You can't improve what you don't measure. But heavy observability is overkill fo
 
 ```json
 {
-  "PostToolUse": [
-    {
-      "matcher": "Edit|Write|Bash",
-      "command": "echo \"$(date +%Y-%m-%dT%H:%M:%S) | $CLAUDE_TOOL_NAME | $CLAUDE_FILE_PATH\" >> .claude/metrics.log",
-      "description": "Log tool usage for telemetry"
-    }
-  ]
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "TOOL=$(cat | jq -r '.tool_name') && echo \"$(date +%Y-%m-%dT%H:%M:%S) | $TOOL\" >> .claude/metrics.log"
+          }
+        ]
+      }
+    ]
+  }
 }
 ```
 
