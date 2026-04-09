@@ -743,3 +743,68 @@ Agent feedback loops burn tokens. Every time a sensor calls back into the LLM �
 - Full pipeline (all sensors): only for HIGH risk changes (auth, payments, data migration)
 - For LOW risk changes (rename, docs, formatting): hooks only, skip inferential loops
 ```
+
+## Start Here — The 3-Step Starter Kit
+
+Nine phases is a lot. Don't build them all on day 1 — start with the three steps that catch 80% of issues, then expand as you see the value.
+
+### Step 1: Hooks + CLAUDE.md (30 minutes to set up)
+
+Start with Phase 4 only. Add a `CLAUDE.md` with project context and coding conventions. Then add three hooks: auto-format on edit, lint on edit, and block dangerous commands. That's it.
+
+Result: the agent self-corrects on lint and format issues automatically. No more cleaning up style violations by hand.
+
+### Step 2: Add /review Skill (15 minutes)
+
+Add the review skill from Phase 6. Put one line in `CLAUDE.md`: "After completing a feature, run /review before presenting to user."
+
+Result: the agent catches its own mistakes before you see the code. Security issues, N+1 queries, unnecessary complexity — flagged and fixed without your involvement.
+
+### Step 3: Add Testing Rules (15 minutes)
+
+Add testing conventions to `CLAUDE.md` (Phase 5). Optionally add the TDD gate hook that blocks production code edits when no test file exists.
+
+Result: the agent writes tests alongside code and verifies coverage. No more "I'll add tests later" — tests are part of the workflow from the start.
+
+### After Step 3, You Have a Working Harness
+
+It covers the phases where 80% of issues are caught. Then expand:
+
+- **Week 2:** Add spec template and spec review skill (Phases 2-3)
+- **Week 3:** Add SonarQube MCP for independent quality verification (Phase 7)
+- **Month 2:** Add simplification loop and optimization triggers (Phases 8-9)
+- **Month 3:** Add brainstorming skill and architecture checks (Phases 1, 3)
+
+Start where the pain is highest (code quality), expand toward earlier phases (spec, design) and later phases (optimization, maintenance) as you see the value.
+
+## Team Adoption
+
+The harness lives in the repo. This makes it shareable.
+
+1. **Commit the harness.** Push `.claude/settings.json`, `.claude/skills/`, and `CLAUDE.md` to the repo. Any teammate using Claude Code gets the same guides, hooks, and skills automatically.
+2. **Document the harness.** Add a "Development Harness" section to your README or contributing guide. Explain what hooks fire, what skills are available, and how feedback loops work.
+3. **Onboard incrementally.** Don't mandate the full harness on day 1. Start by sharing `CLAUDE.md`. Then hooks. Then skills. Let people see the value at each step before adding more.
+4. **Harness as team contract.** Over time, the harness encodes team standards — what "done" means, what quality looks like, how code is reviewed. It becomes a living style guide that's enforced, not just documented.
+
+This directly addresses what the old Chapter 19 was going to cover — the harness IS the onboarding tool.
+
+## Measuring the Harness
+
+How do you know the harness is working?
+
+| Metric | What It Tells You | Target Trend |
+|--------|-------------------|--------------|
+| Defects found in human review | Are sensors catching issues before you? | ↓ Decreasing |
+| Agent self-correction cycles per change | Is the agent getting it right faster? | ↓ Decreasing (guides improving) |
+| Time from task start to PR-ready | Is the overall workflow faster? | ↓ Decreasing |
+| Review turnaround time | Are human reviews faster? | ↓ Decreasing |
+| Quality gate first-pass rate | Does code pass SonarQube on first try? | ↑ Increasing |
+| Token cost per feature | Are feedback loops efficient? | → Stable or ↓ Decreasing |
+
+How to track:
+
+- Most are observable from your workflow — git log timestamps, PR review comments, SonarQube dashboard.
+- For self-correction cycles: count how many times hooks fire before passing. If you see the lint hook firing 8 times per edit, your `CLAUDE.md` conventions need clarification.
+- Review monthly. If defects in human review aren't decreasing, your guides need improvement.
+
+The harness improves itself: every defect found in human review that could have been caught by a sensor becomes a new guide or sensor. This is Fowler's "mechanical enforcement instead of hope" — the measurement loop closes the circle.
