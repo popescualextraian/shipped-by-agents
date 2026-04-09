@@ -70,7 +70,7 @@ A well-written `CLAUDE.md` and a solid spec template eliminate more defects than
 
 Here's how guidance effort tapers across the SDLC:
 
-```
+```text
 Conception  ██████████████████  ← most guidance, cheapest to fix
 Spec        █████████████████
 Design      ████████████████
@@ -242,7 +242,7 @@ The core mechanism of the harness is not "agent produces draft, human fixes it."
 
 Here's the loop:
 
-```
+```text
 Agent acts → Sensor checks → Pass? → Present to human
                               ↓ Fail
                      Agent corrects → Sensor re-checks → ...
@@ -863,7 +863,7 @@ One of the biggest advantages of a harness: go from idea to working code in an h
 
 The pattern:
 
-```
+```text
 State intent → Agent runs full harness → Review result → Not happy?
     → Refine intent → Agent reruns → Review → ... → Ship
 ```
