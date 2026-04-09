@@ -693,3 +693,53 @@ A doc-sync hook that reminds about documentation after source edits:
   ]
 }
 ```
+
+## Quick-Reference Table
+
+The entire harness, compressed into one table.
+
+| Phase | Guides | Sensors | Example Tools |
+|-------|--------|---------|---------------|
+| **Conception** | Context files, templates, brainstorm skills | Checklist validation | Brainstorming skill |
+| **Specification** | Spec templates, domain glossary | Spec review skill, completeness check | Review skill |
+| **Design** | ADRs, design principles, module boundaries | Structural validation, diagram review | Mermaid, CLAUDE.md |
+| **Implementation** | Coding conventions, code templates | Linter, formatter, type checker, fast tests | ESLint, Prettier, hooks |
+| **Testing** | Test templates, coverage thresholds, test rules | Test runner, coverage report, mutation testing | JUnit, pytest, Stryker |
+| **Review** | Review checklist, style guide | Review skill, simplification loop | /review skill |
+| **Quality Gates** | Quality profiles, security policies | SonarQube MCP, dependency scanner | SonarQube, npm audit |
+| **Optimization** | Performance budgets, complexity thresholds | Benchmarks, complexity metrics | Profiler, static analysis |
+| **Maintenance** | Log format docs, doc structure | Log analysis, doc-code sync | Log analysis skill |
+
+## Cost Awareness
+
+Agent feedback loops burn tokens. Every time a sensor calls back into the LLM — to review, simplify, or fix — that's a paid inference. Computational sensors (linters, type checkers, test runners) are free. Inferential sensors (review skills, simplification loops, quality analysis) cost money.
+
+### Token Cost Tiers
+
+| Sensor Type | Cost | Speed | When to Use |
+|-------------|------|-------|-------------|
+| Hooks (linter, formatter, type checker) | Free | Milliseconds | Always — every edit |
+| Test runner | Free | Seconds | Always — every change |
+| Single-pass skill (/review, /simplify) | ~$0.02-0.10 per run | 10-30 seconds | Every feature — skip for trivial edits |
+| Multi-pass feedback loop (review → fix → re-review) | ~$0.10-0.50 per cycle | 1-3 minutes | Feature work, not one-line fixes |
+| SonarQube MCP round-trip | Free (tool) + ~$0.05 (agent reads/fixes) | 30-60 seconds | Before presenting code to user |
+| Full pipeline (all inferential sensors) | ~$0.50-2.00 per feature | 5-10 minutes | Complex features, high-risk changes |
+
+### Rules of Thumb
+
+- Run computational sensors on every change (hooks) — free and fast.
+- Run inferential sensors on feature-level work, not every small edit.
+- Skip the simplification loop on trivial changes — a rename doesn't need `/simplify`.
+- Monitor token usage weekly. Most teams are surprised by which loops cost the most.
+- If costs spike, check which loops run most often. A feedback loop that fires on every edit instead of every feature is the usual culprit.
+
+### CLAUDE.md Cost Control Example
+
+```markdown
+## Feedback Loop Rules
+- Hooks (lint, type check, fast tests): run on EVERY edit — non-negotiable
+- /review and /simplify: run once per feature, not per edit
+- SonarQube quality gate: run once before presenting final code
+- Full pipeline (all sensors): only for HIGH risk changes (auth, payments, data migration)
+- For LOW risk changes (rename, docs, formatting): hooks only, skip inferential loops
+```
