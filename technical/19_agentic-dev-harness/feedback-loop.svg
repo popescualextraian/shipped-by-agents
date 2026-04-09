@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <style>
+    .node-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; fill: #fff; font-weight: 600; }
+    .diamond-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 13px; fill: #0A2540; font-weight: 600; }
+    .arrow-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; font-weight: 500; }
+    .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 16px; fill: #0A2540; font-weight: 700; }
+  </style>
+
+  <defs>
+    <marker id="arrow-navy" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#0A2540"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#00BFA5"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#E8722A"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="300" y="30" class="title" text-anchor="middle">The Autonomous Feedback Loop</text>
+
+  <!-- Node 1: Agent Acts (navy) -->
+  <rect x="30" y="80" width="140" height="44" rx="6" fill="#0A2540"/>
+  <text x="100" y="107" class="node-label" text-anchor="middle">Agent Acts</text>
+
+  <!-- Arrow: Agent Acts → Computational Sensor -->
+  <line x1="170" y1="102" x2="210" y2="102" stroke="#0A2540" stroke-width="2" marker-end="url(#arrow-navy)"/>
+
+  <!-- Node 2: Computational Sensor (navy) -->
+  <rect x="220" y="68" width="160" height="28" rx="6" fill="#0A2540"/>
+  <text x="300" y="87" class="node-label" text-anchor="middle">Computational Sensor</text>
+  <!-- Subtitle -->
+  <text x="300" y="112" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10px; fill: #94a3b8; font-style: italic;" text-anchor="middle">linters, type checks, tests</text>
+
+  <!-- Arrow: Computational Sensor → Inferential Sensor -->
+  <line x1="380" y1="82" x2="420" y2="82" stroke="#0A2540" stroke-width="2" marker-end="url(#arrow-navy)"/>
+
+  <!-- Node 3: Inferential Sensor (navy) -->
+  <rect x="430" y="68" width="140" height="28" rx="6" fill="#0A2540"/>
+  <text x="500" y="87" class="node-label" text-anchor="middle">Inferential Sensor</text>
+  <!-- Subtitle -->
+  <text x="500" y="112" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10px; fill: #94a3b8; font-style: italic;" text-anchor="middle">review agents, quality checks</text>
+
+  <!-- Arrow: Inferential Sensor → Diamond -->
+  <line x1="500" y1="96" x2="500" y2="168" stroke="#0A2540" stroke-width="2" marker-end="url(#arrow-navy)"/>
+
+  <!-- Diamond: Pass? -->
+  <polygon points="500,170 545,200 500,230 455,200" fill="#f7f9fb" stroke="#0A2540" stroke-width="2"/>
+  <text x="500" y="205" class="diamond-label" text-anchor="middle">Pass?</text>
+
+  <!-- Pass arrow (teal): Diamond → Present to Human -->
+  <line x1="545" y1="200" x2="570" y2="200" stroke="#00BFA5" stroke-width="2.5"/>
+  <line x1="500" y1="230" x2="500" y2="310" stroke="#00BFA5" stroke-width="2.5" marker-end="url(#arrow-teal)"/>
+  <text x="510" y="268" class="arrow-label" fill="#00BFA5">Yes</text>
+
+  <!-- Node: Present to Human (teal) -->
+  <rect x="420" y="320" width="160" height="44" rx="6" fill="#00BFA5"/>
+  <text x="500" y="347" class="node-label" text-anchor="middle">Present to Human</text>
+
+  <!-- Fail arrow (orange): Diamond → Agent Corrects -->
+  <line x1="455" y1="200" x2="220" y2="200" stroke="#E8722A" stroke-width="2.5" marker-end="url(#arrow-orange)"/>
+  <text x="340" y="193" class="arrow-label" fill="#E8722A">No — fail</text>
+
+  <!-- Node: Agent Corrects (orange) -->
+  <rect x="80" y="178" width="140" height="44" rx="6" fill="#E8722A"/>
+  <text x="150" y="205" class="node-label" text-anchor="middle">Agent Corrects</text>
+
+  <!-- Loop arrow: Agent Corrects → back up to Computational Sensor -->
+  <line x1="150" y1="178" x2="150" y2="142" stroke="#E8722A" stroke-width="2"/>
+  <line x1="150" y1="142" x2="300" y2="142" stroke="#E8722A" stroke-width="2"/>
+  <line x1="300" y1="142" x2="300" y2="100" stroke="#E8722A" stroke-width="2" marker-end="url(#arrow-orange)"/>
+  <text x="225" y="136" class="arrow-label" fill="#E8722A">re-check</text>
+
+  <!-- Legend -->
+  <rect x="30" y="340" width="12" height="12" rx="2" fill="#0A2540"/>
+  <text x="48" y="351" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568;">Sensor check</text>
+
+  <rect x="130" y="340" width="12" height="12" rx="2" fill="#00BFA5"/>
+  <text x="148" y="351" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568;">Pass — converged</text>
+
+  <rect x="260" y="340" width="12" height="12" rx="2" fill="#E8722A"/>
+  <text x="278" y="351" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568;">Fail — agent corrects &amp; retries</text>
+</svg>

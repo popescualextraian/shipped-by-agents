@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
+  <style>
+    .phase-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; fill: #fff; font-weight: 600; }
+    .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; fill: #0A2540; font-weight: 700; }
+    .legend-text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 11px; fill: #4a5568; }
+  </style>
+
+  <defs>
+    <marker id="arr" markerWidth="6" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <path d="M0,0 L6,2.5 L0,5" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="24" class="title" text-anchor="middle">Human Integration Points Across the SDLC</text>
+
+  <!-- Phase boxes — 9 boxes, ~76px wide with 8px gap, starting at x=18 -->
+  <!-- Row y: 50, height: 40 -->
+
+  <!-- 1. Conception — human (orange) -->
+  <rect x="18" y="50" width="76" height="40" rx="5" fill="#E8722A"/>
+  <text x="56" y="75" class="phase-label" text-anchor="middle">Conception</text>
+
+  <!-- Arrow -->
+  <line x1="94" y1="70" x2="102" y2="70" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 2. Spec — human (orange) -->
+  <rect x="104" y="50" width="76" height="40" rx="5" fill="#E8722A"/>
+  <text x="142" y="75" class="phase-label" text-anchor="middle">Spec</text>
+
+  <!-- Arrow -->
+  <line x1="180" y1="70" x2="188" y2="70" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 3. Design — human (orange) -->
+  <rect x="190" y="50" width="76" height="40" rx="5" fill="#E8722A"/>
+  <text x="228" y="75" class="phase-label" text-anchor="middle">Design</text>
+
+  <!-- Arrow -->
+  <line x1="266" y1="70" x2="274" y2="70" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 4. Implementation — autonomous (teal) -->
+  <rect x="276" y="50" width="76" height="40" rx="5" fill="#00BFA5"/>
+  <text x="314" y="69" class="phase-label" text-anchor="middle">Implement-</text>
+  <text x="314" y="82" class="phase-label" text-anchor="middle">ation</text>
+
+  <!-- Arrow -->
+  <line x1="352" y1="70" x2="360" y2="70" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 5. Testing — autonomous (teal) -->
+  <rect x="362" y="50" width="76" height="40" rx="5" fill="#00BFA5"/>
+  <text x="400" y="75" class="phase-label" text-anchor="middle">Testing</text>
+
+  <!-- Arrow -->
+  <line x1="438" y1="70" x2="446" y2="70" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 6. Quality Gates — autonomous (teal) -->
+  <rect x="448" y="50" width="76" height="40" rx="5" fill="#00BFA5"/>
+  <text x="486" y="69" class="phase-label" text-anchor="middle">Quality</text>
+  <text x="486" y="82" class="phase-label" text-anchor="middle">Gates</text>
+
+  <!-- Arrow -->
+  <line x1="524" y1="70" x2="532" y2="70" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 7. Review — human (orange) -->
+  <rect x="534" y="50" width="76" height="40" rx="5" fill="#E8722A"/>
+  <text x="572" y="75" class="phase-label" text-anchor="middle">Review</text>
+
+  <!-- Arrow -->
+  <line x1="610" y1="70" x2="618" y2="70" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 8. Optimization — autonomous (teal) -->
+  <rect x="620" y="50" width="76" height="40" rx="5" fill="#00BFA5"/>
+  <text x="658" y="69" class="phase-label" text-anchor="middle">Optimiz-</text>
+  <text x="658" y="82" class="phase-label" text-anchor="middle">ation</text>
+
+  <!-- Arrow -->
+  <line x1="696" y1="70" x2="704" y2="70" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- 9. Maintenance — autonomous (teal) -->
+  <rect x="706" y="50" width="76" height="40" rx="5" fill="#00BFA5"/>
+  <text x="744" y="69" class="phase-label" text-anchor="middle">Mainten-</text>
+  <text x="744" y="82" class="phase-label" text-anchor="middle">ance</text>
+
+  <!-- Human gate markers — small triangles below orange boxes -->
+  <polygon points="56,94 50,104 62,104" fill="#E8722A"/>
+  <text x="56" y="118" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9px; fill: #E8722A; font-weight: 600;" text-anchor="middle">HUMAN</text>
+  <text x="56" y="128" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9px; fill: #E8722A; font-weight: 600;" text-anchor="middle">DECIDES</text>
+
+  <polygon points="142,94 136,104 148,104" fill="#E8722A"/>
+  <text x="142" y="118" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9px; fill: #E8722A; font-weight: 600;" text-anchor="middle">HUMAN</text>
+  <text x="142" y="128" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9px; fill: #E8722A; font-weight: 600;" text-anchor="middle">APPROVES</text>
+
+  <polygon points="228,94 222,104 234,104" fill="#E8722A"/>
+  <text x="228" y="118" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9px; fill: #E8722A; font-weight: 600;" text-anchor="middle">HUMAN</text>
+  <text x="228" y="128" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9px; fill: #E8722A; font-weight: 600;" text-anchor="middle">APPROVES</text>
+
+  <polygon points="572,94 566,104 578,104" fill="#E8722A"/>
+  <text x="572" y="118" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9px; fill: #E8722A; font-weight: 600;" text-anchor="middle">HUMAN</text>
+  <text x="572" y="128" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 9px; fill: #E8722A; font-weight: 600;" text-anchor="middle">CONFIRMS</text>
+
+  <!-- Autonomous loop bracket over teal phases (Implementation → Quality Gates) -->
+  <line x1="276" y1="45" x2="524" y2="45" stroke="#00BFA5" stroke-width="1.5"/>
+  <line x1="276" y1="45" x2="276" y2="50" stroke="#00BFA5" stroke-width="1.5"/>
+  <line x1="524" y1="45" x2="524" y2="50" stroke="#00BFA5" stroke-width="1.5"/>
+  <text x="400" y="40" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 10px; fill: #00BFA5; font-weight: 600;" text-anchor="middle">autonomous feedback loop</text>
+
+  <!-- Legend -->
+  <rect x="220" y="160" width="14" height="14" rx="3" fill="#00BFA5"/>
+  <text x="240" y="172" class="legend-text">Autonomous loop — agent iterates until sensors pass</text>
+
+  <rect x="220" y="180" width="14" height="14" rx="3" fill="#E8722A"/>
+  <text x="240" y="192" class="legend-text">Human decision gate — requires human judgment</text>
+</svg>

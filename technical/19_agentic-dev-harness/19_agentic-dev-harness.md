@@ -229,3 +229,136 @@ Generate a Mermaid diagram of the final design.
 ### Framework Alternative
 
 BMAD's Architect agent produces formal architecture documents with orchestrator memory.
+
+## Wiring It Together
+
+You've defined guides and sensors for three phases — but none of them work in isolation. This section shows how the pieces connect, introduces the autonomous feedback loop pattern, and clarifies where humans stay in the loop.
+
+### The Autonomous Feedback Loop
+
+The core mechanism of the harness is not "agent produces draft, human fixes it." It's "agent iterates autonomously until quality criteria are met, then presents the result."
+
+Here's the loop:
+
+```
+Agent acts → Sensor checks → Pass? → Present to human
+                              ↓ Fail
+                     Agent corrects → Sensor re-checks → ...
+```
+
+The loop chains two kinds of sensors. Computational sensors fire first — they're fast and free (linters, type checkers, test runners). Inferential sensors fire second — they're slower and cost tokens, but catch semantic problems (review agents, quality checks). The agent converges through multiple passes. Each pass fixes fewer issues. By the time the developer sees the output, it's already survived every automated check you've configured.
+
+This is the shift: the human reviews converged output, not first drafts.
+
+<img src="./feedback-loop.svg" width="100%"/>
+
+### Human Integration Points
+
+Not everything should be autonomous. Some decisions need a human — not because the agent can't generate an answer, but because the answer has consequences the agent can't own.
+
+Four types of human integration:
+
+- **Decision gates** — Architecture choices, spec approval, scope changes. These shape everything downstream. Always human.
+- **Review gates** — Final code review after the agent loop converges. The human confirms intent and correctness — they don't discover formatting issues or missing tests. The sensors already caught those.
+- **Override points** — The developer can interrupt any loop at any time. Adjust guides, reject output, redirect the agent. You're never locked out.
+- **Diminishing interaction** — As the harness improves, reviews get faster. Humans spend less time on things sensors can catch and more time on intent, business logic, and design judgment.
+
+<img src="./human-integration.svg" width="100%"/>
+
+### Calibrating the Human-Automation Balance
+
+Three concepts govern how much human attention each change gets.
+
+**1. Risk-based review depth**
+
+| Change Type | Risk | Human Review Level |
+|---|---|---|
+| Rename, formatting, import cleanup | Low | Glance at diff, trust sensors |
+| New utility function, test additions | Medium | Read the code, verify intent |
+| Payment flow, auth logic, data migration | High | Line-by-line review, test manually |
+| Architecture change, new external dependency | Critical | Design discussion before agent starts |
+
+The harness treats all changes equally — every sensor fires on every change. But the human calibrates attention based on risk. A renamed variable that passes all sensors gets a five-second scan. A payment flow change gets a careful read, even if sensors are green.
+
+**2. Escalation paths**
+
+Sometimes the loop doesn't converge. The agent fixes one thing, breaks another, fixes that, breaks the first. Three escalation rules prevent infinite loops:
+
+- **Max iterations** — after 3 failed attempts on the same issue, the agent stops and presents its findings to the developer. It explains what it tried and what failed.
+- **Scope escalation** — if a sensor failure points to a design problem (not a code problem), the agent escalates instead of band-aiding.
+- **Manual takeover** — the developer can interrupt at any point and fix the issue manually, then hand back to the agent.
+
+Encode escalation rules in `CLAUDE.md` so the agent knows when to stop:
+
+```markdown
+## Escalation Rules
+- If a sensor fails 3 times on the same issue, stop and report to user.
+- If a fix requires changes outside the current module, ask before proceeding.
+- If quality gate findings point to an architectural issue, escalate — don't band-aid.
+```
+
+**3. The trust dial**
+
+Trust is not a switch — it's a dial you turn over time as evidence accumulates:
+
+- **Week 1** — Review everything. You're calibrating the harness and learning what the agent gets right.
+- **Month 1** — Review by exception. Low-risk changes get a quick scan. You focus review time on medium and high-risk changes.
+- **Month 3** — Review high-risk only. The harness catches everything else reliably. You've built confidence through evidence.
+- **Ongoing** — Every mistake turns the dial back slightly. Each mistake becomes a new guide or sensor, so the same mistake can't happen twice.
+
+This is NOT about reducing vigilance — it's about redirecting human attention from things sensors can catch to things only humans can judge.
+
+### Achieving Quality with Fewer Interactions
+
+Four strategies compound to reduce the number of human-agent round trips:
+
+1. **Front-loading guides** — Better input produces fewer corrections. A clear `CLAUDE.md` and a tight spec eliminate more defects than any number of post-hoc reviews.
+2. **Chaining sensors** — Computational sensors fire first (fast, cheap). Inferential sensors fire second (slower, smarter). Humans review last (slowest, most expensive). Each layer catches what the previous layer missed.
+3. **Evolving the harness** — Every mistake becomes a new guide or sensor. Mechanical enforcement instead of hope. The harness gets better every week.
+4. **Convergence criteria** — Each phase has a clear "done" condition. The agent knows when to stop iterating and present results. No ambiguity, no over-polishing.
+
+### Parallel Execution with Worktrees
+
+For larger features, you can run multiple agent sessions in parallel. Each session gets its own git worktree — an isolated copy of the repo with its own branch and the full harness active. Split a feature into three independent tasks, launch three agents, and merge the results. This works well for tasks that don't touch the same files: one agent builds the API endpoints, another writes the frontend components, a third sets up the database migrations. Don't use it for tightly coupled work where one agent's output depends on another's — the merge conflicts aren't worth it.
+
+```bash
+# Create three worktrees for parallel development
+git worktree add ../feature-api   feature/api-endpoints
+git worktree add ../feature-ui    feature/ui-components
+git worktree add ../feature-db    feature/db-migrations
+
+# Launch an agent in each (each gets its own CLAUDE.md, hooks, skills)
+cd ../feature-api && claude "Implement the order API endpoints per spec"
+cd ../feature-ui  && claude "Build the order form components per spec"
+cd ../feature-db  && claude "Create the order tables migration per spec"
+```
+
+### Sample Configuration
+
+Here's a complete `CLAUDE.md` that encodes conventions from phases 1 through 3. It combines project context, coding conventions, module boundaries, testing rules, and the autonomous loop instruction:
+
+```markdown
+## Project Context
+E-commerce platform. Java/Spring Boot backend, React frontend.
+Domain: orders, inventory, payments.
+
+## Coding Conventions
+- Use TypeScript strict mode. No `any` types.
+- Error handling: throw typed errors from src/common/errors.ts
+- Naming: camelCase for variables, PascalCase for classes, kebab-case for files
+
+## Module Boundaries
+- orders/ cannot import from payments/ — use events
+- All services must be stateless
+
+## Testing
+- TDD required. Write tests before implementation.
+- Coverage threshold: 80% branch coverage
+- No mocking the database in integration tests
+
+## Before Presenting Code
+1. All hooks must pass
+2. Run /review
+3. Run /simplify
+4. Run tests one final time
+```
