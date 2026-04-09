@@ -83,3 +83,149 @@ Maintain    ██                  ← lightest touch, mostly monitoring
 <img src="./compounding-funnel.svg" width="100%"/>
 
 Invest most in the early guides. The goal is not zero checks at the end — sensors always stay on. But the agent self-corrects less because it got better input. When CLAUDE.md is clear, the spec is tight, and the design is agreed upon, the code phase produces fewer mistakes. The test phase catches less. The review phase has less to flag. Fewer review cycles means faster delivery.
+
+## Phase 1: Conception and Requirements
+
+This is where you brainstorm features, explore constraints, and discuss trade-offs with the agent. You're not writing code yet — you're figuring out what to build and why. The agent becomes a thinking partner: it asks questions you forgot, surfaces edge cases you missed, and structures the mess of ideas into something actionable.
+
+This phase has the most leverage of any in the SDLC. A wrong requirement is 100x more expensive to fix in production than to catch here. Front-load your guidance investment. Give the agent rich context about your project, your domain, and your constraints — and it will ask better questions, spot more gaps, and produce requirements that actually hold up.
+
+### Guide
+
+- **Project context files** — a `CLAUDE.md` with project description, domain glossary, and team conventions. The agent needs to know what this system *is* before it can reason about what it *should do*.
+- **Existing documentation fed as context** — PRDs, architecture docs, prior specs. The more the agent knows about past decisions, the less it reinvents or contradicts.
+- **User story templates with required fields** — persona, goal, acceptance criteria, edge cases, non-functional requirements. Templates force completeness; without them, the agent skips sections.
+- **Brainstorming skills that enforce structured exploration** — a skill that walks through a checklist before letting the agent jump to implementation. Structure prevents premature solutioning.
+
+### Sensor
+
+- **Checklist validation** — does the output cover acceptance criteria, edge cases, non-functional requirements, security considerations? A simple completeness check catches the most common gaps.
+- **Cross-reference check** — does this feature conflict with existing features or specs? The agent should verify against what's already been decided.
+
+### Concrete Config
+
+A `CLAUDE.md` snippet that sets project context and points the agent to the brainstorming skill:
+
+```markdown
+## Project Context
+This is an e-commerce platform (Java/Spring Boot backend, React frontend).
+Domain: orders, inventory, payments. Key constraint: PCI compliance for payment data.
+Before implementing any feature, brainstorm requirements using /brainstorm.
+```
+
+A brainstorming skill at `.claude/skills/brainstorm.md` that enforces structured exploration:
+
+```markdown
+Ask clarifying questions one at a time. For each feature, cover:
+1. Who is the user? What's their goal?
+2. What are the acceptance criteria?
+3. Edge cases and error scenarios?
+4. Non-functional requirements (performance, security, compliance)?
+5. Does this conflict with existing features?
+Output a structured requirements doc in docs/requirements/.
+```
+
+### Framework Alternative
+
+Teams wanting more structure can use BMAD's Analyst and PM agents to generate PRDs, or OpenSpec's `/opsx:propose` to formalize the idea.
+
+## Phase 2: Specification
+
+You've figured out *what* to build. Now you write the detailed spec: acceptance criteria, API contracts, error handling, testing strategy. The spec becomes the guide for every subsequent phase — the agent reads it before coding, tests against it, and references it during review.
+
+A vague spec creates a vague implementation. If the spec says "handle errors appropriately," the agent will guess — and guess differently every time. Tight specs with concrete examples produce consistent, correct code. Your investment here pays off in every phase that follows.
+
+### Guide
+
+- **Spec templates** — a markdown structure with required sections: overview, requirements, API contract, error handling, testing strategy. The template makes missing sections visible.
+- **Existing specs as few-shot examples** — show the agent what a good spec looks like in your project. One example is worth a hundred instructions.
+- **Domain glossary** — enforce consistent terminology. If your team says "order," the agent shouldn't say "purchase" or "transaction."
+- **Constraints doc** — approved technologies, forbidden patterns, compliance requirements. The agent should know what it *can't* use before it proposes solutions.
+
+### Sensor
+
+- **Spec review skill** — checks for completeness, ambiguity, contradictions, and missing error scenarios. This is an inferential sensor — it uses the LLM to judge spec quality.
+- **Human review gate** — specs always need human sign-off. The agent can self-improve the spec, but you make the final call.
+
+### Feedback Loop
+
+Agent writes spec. The spec review skill checks for completeness and ambiguity. The agent rewrites flagged sections. The review skill re-checks. This loop converges — each pass fixes fewer issues. When it's clean, you see a polished spec, not a first draft. The agent did two or three rounds of revision before you even looked.
+
+### Concrete Config
+
+A spec review skill at `.claude/skills/review-spec.md`:
+
+```markdown
+Review the spec at the given path. Check for:
+- Missing sections: overview, requirements, API contract, error handling, testing strategy
+- Vague language: "should", "appropriately", "as needed", "etc."
+- Missing error scenarios for each API endpoint
+- TBD/TODO placeholders
+- Contradictions between sections
+Output: list of findings with severity (MUST FIX / SHOULD FIX / NOTE).
+After listing findings, rewrite the flagged sections and present the updated spec.
+```
+
+A `CLAUDE.md` instruction that wires the skill into the workflow:
+
+```markdown
+## Specs
+After writing any spec, run /review-spec on it before presenting to the user.
+If findings are MUST FIX, rewrite and re-check until clean.
+```
+
+### Framework Alternative
+
+OpenSpec's `/opsx:apply` formalizes this into a strict three-phase state machine (proposal, spec, archive).
+
+## Phase 3: Architecture and Design
+
+You know what to build and you have a tight spec. Now you decide *how* to build it — architecture decisions, data models, API design, component boundaries. This phase sets the structural constraints the agent must follow during implementation.
+
+The agent is good at generating architecture proposals. It's bad at knowing your system's history. Without context, it'll propose patterns that contradict past decisions, introduce dependencies that violate module boundaries, or design stateful services in a stateless system. Feed it your ADRs, your existing diagrams, and your design principles — and it proposes designs that fit.
+
+### Guide
+
+- **Architecture Decision Records (ADRs)** — the agent reads past decisions and follows established patterns. ADRs are the institutional memory that prevents the agent from re-debating settled questions.
+- **Existing diagrams and models as context** — Mermaid source files, ERDs, component diagrams. Visual context helps the agent understand system structure.
+- **Design principles doc** — explicit rules like "prefer composition over inheritance" or "all services must be stateless." Without these, the agent defaults to whatever the training data suggests.
+- **Module boundary rules** — which packages can depend on which. Cross-boundary imports are the most common architectural violation agents produce.
+
+### Sensor
+
+- **Structural validation** — does the design violate module boundaries? This can be checked mechanically against the rules in `CLAUDE.md`.
+- **Pattern consistency check** — does the design match existing patterns or deviate? Deviation isn't always wrong, but it should be flagged and justified.
+- **Diagram generation** — the agent produces Mermaid diagrams for review. Visual output makes architectural issues obvious that text descriptions hide.
+
+### Feedback Loop
+
+Agent proposes architecture. The fitness check validates against ADRs, module boundaries, and established patterns. The agent restructures any violations. The re-check passes. You review a design that already fits the system — not a raw proposal that ignores half of your constraints.
+
+### Concrete Config
+
+A `CLAUDE.md` section that defines architecture rules:
+
+```markdown
+## Architecture Rules
+- Layered architecture: controller → service → repository. No skipping layers.
+- Module boundaries: `orders` cannot import from `payments` directly — use events.
+- All new services must be stateless. Session data goes in Redis.
+- Before proposing new components, read docs/adrs/ for past decisions.
+- After designing, run /check-architecture to validate.
+```
+
+An architecture check skill at `.claude/skills/check-architecture.md`:
+
+```markdown
+Review the proposed design against:
+1. Module boundary rules in CLAUDE.md — any cross-boundary imports?
+2. Existing ADRs in docs/adrs/ — does this contradict a past decision?
+3. Layer violations — does any component skip a layer?
+4. New dependencies — does this introduce a library not in approved-libs.md?
+If violations found, restructure the design and re-check.
+Generate a Mermaid diagram of the final design.
+```
+
+### Framework Alternative
+
+BMAD's Architect agent produces formal architecture documents with orchestrator memory.
