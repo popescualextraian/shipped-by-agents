@@ -564,3 +564,132 @@ A `CLAUDE.md` instruction that orchestrates the full pre-presentation pipeline:
 4. Run tests one final time
 5. Then present the result
 ```
+
+## Phase 7: Quality Gates
+
+Quality gates are external, deterministic checks that don't rely on the agent's judgment. The agent might convince itself that the code is fine — a quality gate doesn't care about opinions. It runs static analysis, checks vulnerability databases, and returns a pass/fail verdict based on rules your team defined. This is the difference between "the agent thinks it's secure" and "SonarQube confirms it meets your security policy."
+
+Quality gates are the last automated checkpoint before human review. Everything that passed through phases 4-6 was checked by the agent's own sensors. Phase 7 adds an independent opinion — tools that evaluate the code without knowing (or caring) what the agent intended.
+
+### Guide
+
+- **Quality profiles** — SonarQube rule sets configured per language, with severity thresholds. Define what matters: blocker and critical issues must be zero; major issues under a threshold you choose.
+- **Quality gate definition** — the concrete conditions that must pass before a task is done. Example: zero new blocker issues, zero new critical issues, code coverage on new code above 80%, duplication below 3%.
+- **Security scan policies** — SAST rules (SonarQube security hotspots, Semgrep), dependency vulnerability thresholds (no critical CVEs, high CVEs must have a remediation plan).
+- **SonarQube Context Augmentation** — SonarQube 2026.1 can inject quality rules *before* code generation via native Agentic Analysis. Instead of catching issues after the agent writes code, it prevents them. The agent receives the rules as context and writes compliant code on the first pass.
+
+### Sensor
+
+- **SonarQube via MCP** — the agent triggers a scan, queries results, reads individual findings, fixes the code, and re-triggers. Full programmatic access to the quality gate.
+- **SonarQube Agentic Analysis** — native Generate-Verify-Loop built into SonarQube 2026.1+. The agent writes code, SonarQube analyzes it, the agent fixes findings, and the cycle repeats until the gate passes. No MCP needed.
+- **Dependency vulnerability scanners** — `npm audit`, OWASP Dependency-Check, `pip-audit`, Trivy. These check your dependency tree for known vulnerabilities independently of code quality.
+
+### Feedback Loop
+
+Agent triggers SonarQube scan via MCP. Reads quality gate status. If failed: reads each finding — file, line, rule, severity, explanation. Fixes the code. Re-triggers the scan. Repeats until the gate passes. Max 3 attempts — if the gate still fails after three rounds, the agent escalates to the user with a summary of what it tried and what's still failing.
+
+### Path A: Native Agentic Analysis (Recommended)
+
+SonarQube 2026.1 introduced Context Augmentation — the server injects its quality rules into the agent's context *before* code generation begins. The agent reads the rules and writes compliant code from the start. Then SonarQube runs its Generate-Verify-Loop: analyze the output, feed findings back, let the agent fix, re-analyze. This is the tightest integration — issues are prevented, not just caught.
+
+Available for Claude Code, Cursor, and Windsurf. No MCP server needed — the integration is native. If you're on SonarQube 2026.1 or later, use this path.
+
+### Path B: MCP Integration (Fallback)
+
+For older SonarQube versions or setups where native integration isn't available. The agent queries SonarQube results via MCP after writing code — a traditional scan-fix-rescan loop.
+
+MCP server config:
+
+```json
+{
+  "mcpServers": {
+    "sonarqube": {
+      "command": "npx",
+      "args": ["@sonarsource/sonarqube-mcp-server"],
+      "env": { "SONAR_URL": "http://localhost:9000", "SONAR_TOKEN": "${SONAR_TOKEN}" }
+    }
+  }
+}
+```
+
+`CLAUDE.md` quality gate instruction:
+
+```markdown
+## Quality Gates
+After /review and /simplify pass, run the SonarQube quality gate:
+1. Call sonarqube.analyze() on changed files
+2. Read the quality gate status
+3. If FAILED: read each finding, fix the code, re-analyze
+4. Repeat until quality gate passes (max 3 attempts — escalate to user if stuck)
+5. Report: "Quality gate passed. Fixed: [list of issues]"
+Do not present code to user until quality gate is GREEN.
+```
+
+## Phase 8: Optimization
+
+Not every change needs optimization. Most code that passes phases 4-7 is good enough. This phase triggers on demand — when a performance budget is exceeded, when a complexity threshold is crossed, or when you explicitly ask the agent to optimize. It reuses the `/simplify` skill from Phase 6 and adds performance-specific checks.
+
+### Guide
+
+- **Performance budgets** — API response time < 200ms, bundle size < 500KB, database queries < 50ms. Concrete numbers give the agent a target, not a vague "make it fast."
+- **Complexity thresholds** — cyclomatic complexity < 10 per function, file length < 300 lines. These trigger the optimization phase automatically when `/review` flags violations.
+- **Simplification skill instructions** — the `/simplify` skill from Phase 6 handles structural simplification. This phase adds performance-aware optimization on top.
+
+### Sensor
+
+- **Benchmarks** — the agent runs performance benchmarks before and after optimization. Only changes that improve metrics are kept.
+- **Complexity metrics** — cyclomatic complexity, cognitive complexity, lines per function. Measured mechanically, not by opinion.
+- **Test suite still passes** — every optimization must preserve behavior. Tests are the safety net.
+
+### Concrete Config
+
+```markdown
+## Optimization (run on request or when complexity exceeds thresholds)
+When asked to optimize, or when /review flags complexity issues:
+1. Run /simplify on flagged files
+2. Check cyclomatic complexity: functions must be < 10
+3. Run benchmarks if performance-sensitive code changed
+4. Compare before/after metrics. Only keep changes that improve metrics without breaking tests.
+```
+
+## Phase 9: Maintenance
+
+Ongoing health monitoring — log analysis, documentation drift, dependency updates. This is the lightest phase because earlier phases prevented most issues. The harness doesn't stop when the feature ships. It keeps watching for the slow decay that turns clean code into legacy code: logs filling with new error patterns, docs drifting from reality, dependencies accumulating vulnerabilities.
+
+### Guide
+
+- **Log format docs** — standard log levels, structured logging format, what to log at each level. Without this, every service logs differently and analysis becomes archaeology.
+- **Documentation structure** — where docs live, what each doc covers, update expectations. The agent needs to know which docs might need updating when code changes.
+- **Dependency update policies** — how often to check, what severity triggers immediate action, who approves major version bumps.
+
+### Sensor
+
+- **Log analysis** — the agent reads log files and identifies repeated error patterns, frequency trends, and root cause candidates. Patterns that appear after a deployment point to regressions.
+- **Doc-code sync** — a hook that reminds the agent to check documentation when source files change. Prevents the slow drift where docs describe last quarter's code.
+- **Dependency vulnerability alerts** — scheduled scans that flag new CVEs in your dependency tree. The agent proposes updates with test verification.
+
+### Concrete Config
+
+A log analysis skill at `.claude/skills/analyze-logs.md`:
+
+```markdown
+Read the provided log file. Identify:
+1. Repeated error patterns (same exception > 3 times)
+2. Error frequency trends (increasing/decreasing)
+3. Root cause candidates (trace back from exception to likely code location)
+For each root cause: propose a fix with a test that reproduces the issue.
+```
+
+A doc-sync hook that reminds about documentation after source edits:
+
+```json
+{
+  "PostToolUse": [
+    {
+      "matcher": "Edit",
+      "command": "echo $CLAUDE_FILE_PATH | grep -q 'src/' && echo 'REMINDER: Check if docs/ need updating for this change' || exit 0",
+      "description": "Remind about doc-code sync after source edits"
+    }
+  ]
+}
+```
