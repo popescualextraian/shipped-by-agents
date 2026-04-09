@@ -60,6 +60,8 @@ Claude Code has no workflow engine. The harness is assembled from four mechanism
 
 > **Hooks can't be bypassed by the agent** — they're mechanical enforcement. CLAUDE.md can be ignored (the agent might "forget"). Use hooks for hard rules, CLAUDE.md for guidance, skills for judgment calls.
 
+<img src="./harness-overview.svg" width="100%"/>
+
 ## The Compounding Effect
 
 Each phase of the SDLC is a filter. What passes through to the next phase is cleaner, more correct, and easier to work with.
@@ -963,3 +965,33 @@ Present a brief report: what's improving, what's getting worse, what to adjust.
 ```
 
 > The goal is not dashboards — it's feedback. Review the log weekly, spot patterns, adjust the harness.
+
+## Resources
+
+### Harness Engineering
+
+- Martin Fowler — [Harness Engineering for Coding Agent Users](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)
+- GitHub — [Continuous AI in Practice](https://github.blog/ai-and-ml/generative-ai/continuous-ai-in-practice-what-developers-can-automate-today-with-agentic-ci/)
+- [SonarQube MCP Server documentation](https://docs.sonarsource.com/sonarqube-server/2025/devops-platform-integration/mcp/)
+
+### Alternative Frameworks
+
+- [OpenSpec](https://github.com/Fission-AI/OpenSpec/) — spec-driven development framework
+- [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) — full-ceremony agile AI development
+- Augment Code — [What Is Spec-Driven Development?](https://www.augmentcode.com/guides/what-is-spec-driven-development)
+
+### Community Implementations
+
+- [vinicius91carvalho/.claude](https://github.com/vinicius91carvalho/.claude) — workflow system with 3 agents, 18 hooks, 5 skills
+- [claude-code-skills](https://github.com/levnikolaevich/claude-code-skills) — 129 skills, orchestrator-worker architecture
+- [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) — curated ecosystem catalog
+
+### Related Chapters
+
+- Chapter 2 — Prompt Design, Context Management, Memory, and Skills
+- Chapter 3 — Coding with AI Agents
+- Chapter 6 — From Level 0 to Level 1: Your First Real Agent Workflow
+- Chapter 7 — Creating Reusable Prompts, Skills, or Simple Agents
+- Chapter 8 — Multi-Agent Workflows
+- Chapter 10 — Testing with AI Agents
+- Chapter 11 — Debugging and Troubleshooting
