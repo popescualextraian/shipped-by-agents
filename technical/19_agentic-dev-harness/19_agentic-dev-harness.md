@@ -59,3 +59,27 @@ Claude Code has no workflow engine. The harness is assembled from four mechanism
 | **Subagents** | Independent workers — spawn for specific tasks | Programmatically by the agent | Spawn a code reviewer agent, spawn a test generator |
 
 > **Hooks can't be bypassed by the agent** — they're mechanical enforcement. CLAUDE.md can be ignored (the agent might "forget"). Use hooks for hard rules, CLAUDE.md for guidance, skills for judgment calls.
+
+## The Compounding Effect
+
+Each phase of the SDLC is a filter. What passes through to the next phase is cleaner, more correct, and easier to work with.
+
+A well-written `CLAUDE.md` and a solid spec template eliminate more defects than any number of post-hoc sensors. The speed gain comes not from skipping quality, but from front-loading it — fewer review cycles, fewer rework loops, fewer surprises.
+
+Here's how guidance effort tapers across the SDLC:
+
+```
+Conception  ██████████████████  ← most guidance, cheapest to fix
+Spec        █████████████████
+Design      ████████████████
+Code        ██████████████      ← hooks catch most issues here
+Test        ████████████
+Review      ████████            ← less to find if earlier phases worked
+Quality     ██████
+Optimize    ████
+Maintain    ██                  ← lightest touch, mostly monitoring
+```
+
+<img src="./compounding-funnel.svg" width="100%"/>
+
+Invest most in the early guides. The goal is not zero checks at the end — sensors always stay on. But the agent self-corrects less because it got better input. When CLAUDE.md is clear, the spec is tight, and the design is agreed upon, the code phase produces fewer mistakes. The test phase catches less. The review phase has less to flag. Fewer review cycles means faster delivery.

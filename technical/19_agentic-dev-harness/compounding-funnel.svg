@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <style>
+    .bar-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; fill: #fff; font-weight: 600; }
+    .annotation { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 12px; fill: #00BFA5; font-weight: 500; }
+    .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 18px; fill: #0A2540; font-weight: 700; }
+  </style>
+
+  <!-- Title -->
+  <text x="40" y="30" class="title">The Compounding Effect: Guidance Effort Across the SDLC</text>
+
+  <!-- Bars — each row: y offset = 45 + (i * 38), bar width tapers from 520 to 80 -->
+
+  <!-- Conception -->
+  <rect x="40" y="50" width="520" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="70" class="bar-label">Conception</text>
+  <text x="572" y="70" class="annotation">  most guidance, cheapest to fix</text>
+
+  <!-- Spec -->
+  <rect x="40" y="88" width="465" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="108" class="bar-label">Spec</text>
+
+  <!-- Design -->
+  <rect x="40" y="126" width="410" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="146" class="bar-label">Design</text>
+
+  <!-- Code -->
+  <rect x="40" y="164" width="355" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="184" class="bar-label">Code</text>
+  <text x="407" y="184" class="annotation">  hooks catch most issues here</text>
+
+  <!-- Test -->
+  <rect x="40" y="202" width="300" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="222" class="bar-label">Test</text>
+
+  <!-- Review -->
+  <rect x="40" y="240" width="245" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="260" class="bar-label">Review</text>
+  <text x="297" y="260" class="annotation">  less to find if earlier phases worked</text>
+
+  <!-- Quality -->
+  <rect x="40" y="278" width="190" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="298" class="bar-label">Quality</text>
+
+  <!-- Optimize -->
+  <rect x="40" y="316" width="135" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="336" class="bar-label">Optimize</text>
+
+  <!-- Maintain -->
+  <rect x="40" y="354" width="80" height="30" rx="4" fill="#0A2540"/>
+  <text x="52" y="374" class="bar-label">Maintain</text>
+  <text x="132" y="374" class="annotation">  lightest touch, mostly monitoring</text>
+</svg>
