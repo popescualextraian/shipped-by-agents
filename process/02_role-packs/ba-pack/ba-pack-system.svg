@@ -1,0 +1,203 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 760" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="BA Pack high-level system architecture">
+  <title>BA Pack — high-level system architecture</title>
+
+  <defs>
+    <!-- Drop shadow for cards -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0A2540" flood-opacity="0.10"/>
+    </filter>
+
+    <!-- Grey arrowheads -->
+    <marker id="arrowSolid" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4a5568"/>
+    </marker>
+    <marker id="arrowSolidStart" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M10,0 L0,5 L10,10 z" fill="#4a5568"/>
+    </marker>
+    <!-- Teal arrowhead (dashed/lazy) -->
+    <marker id="arrowTeal" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#00BFA5"/>
+    </marker>
+    <!-- Orange arrowheads (execution) -->
+    <marker id="arrowOrange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#E8722A"/>
+    </marker>
+    <marker id="arrowOrangeStart" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M10,0 L0,5 L10,10 z" fill="#E8722A"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1360" height="760" fill="#ffffff"/>
+
+  <!-- Title -->
+  <text x="40" y="40" font-size="22" font-weight="700" fill="#0A2540">BA Pack — System Architecture</text>
+  <text x="40" y="62" font-size="13" fill="#4a5568">Editor sits above the system. Inputs flow left to right. The Agent's three powers cluster below it.</text>
+
+  <!-- ======================== EDITOR BANNER (top) ======================== -->
+  <g filter="url(#cardShadow)">
+    <rect x="40" y="92" width="1280" height="60" rx="8" fill="#0A2540" stroke="#0A2540"/>
+  </g>
+  <text x="680" y="118" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">BA Editor</text>
+  <text x="680" y="138" font-size="11" fill="#cbd5e1" text-anchor="middle">VS Code / Obsidian / UI — the BA's surface</text>
+
+  <!-- ======================== MAIN HORIZONTAL FLOW ROW ======================== -->
+  <!-- Row Y center: 280 ; cards span y=240..320 (height 80) -->
+
+  <!-- Sources -->
+  <g filter="url(#cardShadow)">
+    <rect x="40" y="240" width="200" height="100" rx="8" fill="#0A2540" stroke="#0A2540"/>
+  </g>
+  <text x="140" y="270" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Sources</text>
+  <text x="140" y="294" font-size="11" fill="#cbd5e1" text-anchor="middle">Confluence, Jira,</text>
+  <text x="140" y="310" font-size="11" fill="#cbd5e1" text-anchor="middle">Email, Figma, Files</text>
+
+  <!-- Context Layers -->
+  <g filter="url(#cardShadow)">
+    <rect x="300" y="240" width="200" height="100" rx="8" fill="#00BFA5" stroke="#00BFA5"/>
+  </g>
+  <text x="400" y="266" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Context Layers</text>
+  <text x="400" y="288" font-size="11" fill="#e6fffb" text-anchor="middle">Always-on</text>
+  <text x="400" y="304" font-size="11" fill="#e6fffb" text-anchor="middle">Project</text>
+  <text x="400" y="320" font-size="11" fill="#e6fffb" text-anchor="middle">Task</text>
+
+  <!-- Main Agent -->
+  <g filter="url(#cardShadow)">
+    <rect x="560" y="240" width="200" height="100" rx="8" fill="#E8722A" stroke="#E8722A"/>
+  </g>
+  <text x="660" y="268" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">Main Agent</text>
+  <text x="660" y="290" font-size="11" fill="#fff3e8" text-anchor="middle">think • decide</text>
+  <text x="660" y="306" font-size="11" fill="#fff3e8" text-anchor="middle">act • observe</text>
+  <text x="660" y="324" font-size="10" font-style="italic" fill="#fff3e8" text-anchor="middle">the loop</text>
+
+  <!-- Publishers -->
+  <g filter="url(#cardShadow)">
+    <rect x="820" y="240" width="200" height="100" rx="8" fill="#0A2540" stroke="#0A2540"/>
+  </g>
+  <text x="920" y="278" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Publishers</text>
+  <text x="920" y="302" font-size="11" fill="#cbd5e1" text-anchor="middle">workspace →</text>
+  <text x="920" y="318" font-size="11" fill="#cbd5e1" text-anchor="middle">team tools</text>
+
+  <!-- Outputs -->
+  <g filter="url(#cardShadow)">
+    <rect x="1080" y="240" width="240" height="100" rx="8" fill="#0A2540" stroke="#0A2540"/>
+  </g>
+  <text x="1200" y="270" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Outputs</text>
+  <text x="1200" y="294" font-size="11" fill="#cbd5e1" text-anchor="middle">Confluence, Jira,</text>
+  <text x="1200" y="310" font-size="11" fill="#cbd5e1" text-anchor="middle">Word, Email</text>
+
+  <!-- ======================== HORIZONTAL ROW EDGES (no crossings) ======================== -->
+  <!-- Sources -> Context Layers -->
+  <path d="M 240 290 L 300 290" stroke="#4a5568" stroke-width="1.8" fill="none" marker-end="url(#arrowSolid)"/>
+  <!-- Context Layers -> Main Agent -->
+  <path d="M 500 290 L 560 290" stroke="#4a5568" stroke-width="1.8" fill="none" marker-end="url(#arrowSolid)"/>
+  <!-- Main Agent -> Publishers -->
+  <path d="M 760 290 L 820 290" stroke="#4a5568" stroke-width="1.8" fill="none" marker-end="url(#arrowSolid)"/>
+  <!-- Publishers -> Outputs -->
+  <path d="M 1020 290 L 1080 290" stroke="#4a5568" stroke-width="1.8" fill="none" marker-end="url(#arrowSolid)"/>
+
+  <!-- ======================== EDITOR -> ROW (two straight connectors) ======================== -->
+  <!-- Editor bottom y=152. Row top y=240. -->
+  <!-- Editor -> Workspace (Workspace lives at right side, see below). Editor -> Main Agent -->
+  <!-- Editor -> Main Agent : straight vertical line -->
+  <path d="M 660 152 L 660 240" stroke="#4a5568" stroke-width="1.5" fill="none" marker-end="url(#arrowSolid)" marker-start="url(#arrowSolidStart)"/>
+  <text x="668" y="200" font-size="10" font-style="italic" fill="#4a5568">triggers</text>
+
+  <!-- Editor -> Workspace : straight vertical line (Workspace at x=1140, y=440) -->
+  <!-- We'll route to a workspace placed right under Outputs lane area to keep symmetry, OR keep Workspace below the Agent. The cleanest is below the Agent column on the left of the powers row. Let's put Workspace at the LEFT side under Sources/Context, near Agent. Re-decide: place Workspace centered below editor, to the LEFT of the powers row, under Context Layers area, so Editor->Workspace is also a clean down line. -->
+
+  <!-- ======================== WORKSPACE (between editor and powers, left of agent) ======================== -->
+  <!-- Workspace centered at x=400 (under Context Layers column), y=440..520 -->
+  <!-- But we need Editor->Workspace as a clean straight line. Editor spans full width, so we draw down from x=400, y=152 to x=400, y=440. -->
+  <g filter="url(#cardShadow)">
+    <rect x="300" y="440" width="200" height="100" rx="8" fill="#00BFA5" stroke="#00BFA5"/>
+  </g>
+  <text x="400" y="470" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Markdown</text>
+  <text x="400" y="490" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Workspace</text>
+  <text x="400" y="512" font-size="11" fill="#e6fffb" text-anchor="middle">drafts, notes,</text>
+  <text x="400" y="528" font-size="11" fill="#e6fffb" text-anchor="middle">source of truth</text>
+
+  <!-- Editor -> Workspace : L-shaped route through the gap between Sources and Context (x=270), avoiding any card. Down from Editor, across through the gap below the row, then down onto Workspace top edge. -->
+  <path d="M 270 152 L 270 420 L 350 420 L 350 440" stroke="#4a5568" stroke-width="1.5" fill="none" marker-end="url(#arrowSolid)" marker-start="url(#arrowSolidStart)"/>
+  <text x="295" y="414" font-size="10" font-style="italic" fill="#4a5568">edits</text>
+
+  <!-- Workspace <-> Main Agent (bidirectional, orange execution) -->
+  <!-- Workspace top-right area to Agent bottom-left. Agent bottom-left at (560, 340). Workspace top-right at (500, 440). Diagonal line, no crossings: nothing else in this region. -->
+  <path d="M 500 460 L 580 340" stroke="#E8722A" stroke-width="1.8" fill="none" marker-end="url(#arrowOrange)" marker-start="url(#arrowOrangeStart)"/>
+
+  <!-- ======================== THREE POWERS ROW (below Main Agent) ======================== -->
+  <!-- Row at y=440..540, centered around Agent x=660. Three cards: Skills, Tools, Local Agents. -->
+  <!-- Skills -->
+  <g filter="url(#cardShadow)">
+    <rect x="560" y="440" width="200" height="100" rx="8" fill="#00BFA5" stroke="#00BFA5"/>
+  </g>
+  <text x="660" y="468" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Skills</text>
+  <text x="660" y="488" font-size="11" fill="#e6fffb" text-anchor="middle">Methodology • Templates</text>
+  <text x="660" y="504" font-size="11" fill="#e6fffb" text-anchor="middle">Workflows • Reference</text>
+  <text x="660" y="524" font-size="10" font-style="italic" fill="#e6fffb" text-anchor="middle">lazy-loaded</text>
+
+  <!-- Tools -->
+  <g filter="url(#cardShadow)">
+    <rect x="820" y="440" width="200" height="100" rx="8" fill="#E8722A" stroke="#E8722A"/>
+  </g>
+  <text x="920" y="478" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Tools</text>
+  <text x="920" y="500" font-size="11" fill="#fff3e8" text-anchor="middle">MCPs, Scripts,</text>
+  <text x="920" y="516" font-size="11" fill="#fff3e8" text-anchor="middle">Built-ins</text>
+
+  <!-- Local Agents -->
+  <g filter="url(#cardShadow)">
+    <rect x="1080" y="440" width="200" height="100" rx="8" fill="#E8722A" stroke="#E8722A"/>
+  </g>
+  <text x="1180" y="472" font-size="15" font-weight="700" fill="#ffffff" text-anchor="middle">Local Agents</text>
+  <text x="1180" y="494" font-size="11" fill="#fff3e8" text-anchor="middle">delegated</text>
+  <text x="1180" y="510" font-size="11" fill="#fff3e8" text-anchor="middle">sub-agents</text>
+  <text x="1180" y="528" font-size="10" font-style="italic" fill="#fff3e8" text-anchor="middle">isolated context</text>
+
+  <!-- ======================== POWERS -> AGENT EDGES ======================== -->
+  <!-- Skills -> Agent (dashed teal, lazy). Skills top-center (660, 440) -> Agent bottom-center (660, 340). Straight vertical. -->
+  <path d="M 660 440 L 660 340" stroke="#00BFA5" stroke-width="1.8" fill="none" stroke-dasharray="5 4" marker-end="url(#arrowTeal)"/>
+  <text x="668" y="395" font-size="10" font-style="italic" fill="#00BFA5">on demand</text>
+
+  <!-- Tools <-> Agent (orange bidirectional). Tools top-left (840, 440) to Agent bottom-right (740, 340). Diagonal, no crossings here since Skills line is vertical at x=660 and we're to the right of it. -->
+  <path d="M 840 440 L 740 340" stroke="#E8722A" stroke-width="1.8" fill="none" marker-end="url(#arrowOrange)" marker-start="url(#arrowOrangeStart)"/>
+
+  <!-- Local Agents <-> Agent (orange bidirectional). Local Agents top-left (1100, 440) to Agent bottom-right corner area. We need to avoid crossing the Tools<->Agent edge and the Main Agent->Publishers horizontal edge (which is at y=290, well above 340). The Agent->Publishers edge is at y=290; Local Agents line goes from (1100,440) up to Agent. If we connect to Agent's right side (760, ~320) the line would go up-left and pass through... let's check: from (1100,440) to (760, 320). This line passes through (920, 380) approximately - which is in empty space between Tools card (820-1020 x, 440-540 y) and Publishers (820-1020 x, 240-340 y). The line at x=920 is at y=380, which is between y=340 (Publishers/Agent bottom) and y=440 (Tools top). Good — empty corridor. But it would pass through Tools<->Agent line which goes from (840,440) to (740,340). Let's check intersection: parametrize. Tools-Agent line: from (840,440) to (740,340). Local-Agent line: from (1100,440) to (760,320). Do they cross? Tools-Agent has slope (340-440)/(740-840)=(-100)/(-100)=1. Equation: y-440 = 1*(x-840) -> y = x - 400. At x=760, y=360. Local-Agent slope: (320-440)/(760-1100)=(-120)/(-340)=0.353. Equation: y-440 = 0.353*(x-1100) -> y = 0.353x + 51.4. At x=760, y=320 (correct). Tools-Agent ends at x=740. For x in [740, 840] (Tools-Agent range), Local-Agent line: at x=840, y=0.353*840+51.4=348. Tools-Agent at x=840 is y=440. So at x=840, Tools-Agent at 440, Local-Agent at 348. Local-Agent is above. At x=740, Tools-Agent at 340, Local-Agent at 0.353*740+51.4=312. Local-Agent at 312, above Tools-Agent at 340. Both points: Local-Agent line is consistently ABOVE Tools-Agent line in this range. No crossing.
+       But Local-Agent line also enters the Agent box. Endpoint (760, 320) is on Agent right edge (Agent right edge is x=760, y=240..340). y=320 is on the right edge. -->
+  <path d="M 1100 440 L 760 320" stroke="#E8722A" stroke-width="1.8" fill="none" marker-end="url(#arrowOrange)" marker-start="url(#arrowOrangeStart)"/>
+
+  <!-- ======================== TOOLS -> SOURCES (read-back) ======================== -->
+  <!-- Per requirements: omit if it can't be drawn cleanly. We demote to legend note. -->
+
+  <!-- ======================== LEGEND ======================== -->
+  <g transform="translate(40, 660)">
+    <rect x="0" y="0" width="1280" height="68" rx="10" fill="#f7f9fb" stroke="#e0e6ed"/>
+    <text x="20" y="22" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="1.2">LEGEND</text>
+
+    <!-- Color swatches -->
+    <rect x="92" y="12" width="14" height="14" rx="3" fill="#0A2540"/>
+    <text x="114" y="24" font-size="11" fill="#0A2540" font-weight="600">Boundaries</text>
+    <text x="114" y="40" font-size="10" fill="#4a5568">Sources, Outputs, Editor, Publishers</text>
+
+    <rect x="320" y="12" width="14" height="14" rx="3" fill="#00BFA5"/>
+    <text x="342" y="24" font-size="11" fill="#0A2540" font-weight="600">Knowledge &amp; State</text>
+    <text x="342" y="40" font-size="10" fill="#4a5568">Context, Workspace, Skills</text>
+
+    <rect x="540" y="12" width="14" height="14" rx="3" fill="#E8722A"/>
+    <text x="562" y="24" font-size="11" fill="#0A2540" font-weight="600">Execution</text>
+    <text x="562" y="40" font-size="10" fill="#4a5568">Main Agent, Tools, Local Agents</text>
+
+    <!-- Edge styles -->
+    <line x1="730" y1="18" x2="762" y2="18" stroke="#4a5568" stroke-width="1.6" marker-end="url(#arrowSolid)"/>
+    <text x="768" y="22" font-size="10" fill="#4a5568">flow</text>
+
+    <line x1="730" y1="36" x2="762" y2="36" stroke="#E8722A" stroke-width="1.6" marker-end="url(#arrowOrange)" marker-start="url(#arrowOrangeStart)"/>
+    <text x="768" y="40" font-size="10" fill="#4a5568">bidirectional</text>
+
+    <line x1="850" y1="27" x2="882" y2="27" stroke="#00BFA5" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#arrowTeal)"/>
+    <text x="888" y="31" font-size="10" fill="#4a5568">on-demand (lazy)</text>
+
+    <!-- Note -->
+    <text x="1000" y="22" font-size="10" font-style="italic" fill="#4a5568">Note: Tools also read from Sources</text>
+    <text x="1000" y="38" font-size="10" font-style="italic" fill="#4a5568">(omitted from diagram for clarity).</text>
+  </g>
+</svg>
